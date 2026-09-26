@@ -1,0 +1,185 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chaturanga AI | Chess Assistant</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.2.6/dist/purify.min.js"></script>
+</head>
+<body>
+    <!-- =============================== -->
+<!-- CHATURANGA AI - CHESSBOARD      -->
+<!-- =============================== -->
+
+<div class="chessboard-section">
+
+    <h2>♟ Interactive Chessboard</h2>
+
+    <!-- Chessboard -->
+    <div id="chessboard"></div>
+
+    <!-- Turn Indicator -->
+    <div id="turnIndicator" class="turn-indicator">
+        White's Turn
+    </div>
+
+    <!-- Move History -->
+    <div class="move-history">
+
+        <h3>Move History</h3>
+
+        <div id="moveHistory">
+            <p class="empty-history">No moves yet</p>
+        </div>
+
+    </div>
+
+    <!-- Reset Button -->
+    <button id="resetBoardBtn">
+        Reset Board
+    </button>
+</div>
+
+<!-- =============================== -->
+<!-- END OF CHESSBOARD SECTION       -->
+<!-- =============================== -->
+
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="brand">
+                <div class="brand-icon">♞</div>
+                <div>
+                    <h1>CHATURANGA <span>AI</span></h1>
+                    <p>YOUR CHESS COMPANION</p>
+                </div>
+            </div>
+
+            <button class="new-chat" id="newChatBtn">
+                <span>＋</span> New conversation
+            </button>
+
+            <div class="sidebar-section">
+                <p class="section-label">EXPLORE CHESS</p>
+
+                <button class="topic-btn" data-question="Explain chess fundamentals">
+                    <span>♟</span> Chess fundamentals
+                </button>
+
+                <button class="topic-btn" data-question="Explain chess tactics like forks and pins">
+                    <span>⚔</span> Chess tactics
+                </button>
+
+                <button class="topic-btn" data-question="Explain chess opening principles">
+                    <span>♜</span> Opening principles
+                </button>
+
+                <button class="topic-btn" data-question="Explain king safety and castling">
+                    <span>♚</span> King safety
+                </button>
+            </div>
+
+            <div class="sidebar-bottom">
+                <div class="status-dot"></div>
+                <span>RAG ENGINE</span>
+                <span class="online-label">READY</span>
+            </div>
+        </aside>
+
+        <!-- Main chat -->
+        <main class="chat-main">
+
+            <header class="topbar">
+                <div>
+                    <p class="eyebrow">YOUR PERSONAL CHESS ASSISTANT</p>
+                    <h2>Chess Knowledge</h2>
+                </div>
+
+                <div class="model-badge">
+                    <span class="status-dot"></span>
+                    Gemini · RAG
+                </div>
+            </header>
+
+            <section class="chat-area" id="chatArea">
+
+                <div class="welcome-screen" id="welcomeScreen">
+                    <div class="hero-piece">♞</div>
+
+                    <p class="eyebrow">WELCOME TO CHATURANGA AI</p>
+
+                    <h2>
+                        Every move begins<br>
+                        <span>with knowledge.</span>
+                    </h2>
+
+                    <p class="welcome-description">
+                        Your personal chess knowledge assistant.
+                        Explore tactics, understand strategies,
+                        and sharpen your understanding of the game.
+                    </p>
+
+                    <div class="suggestion-grid">
+                        <button class="suggestion-card" data-question="What is a pin in chess?">
+                            <span class="suggestion-icon">♟</span>
+                            <span class="suggestion-title">What is a pin?</span>
+                            <span class="suggestion-subtitle">Learn a chess tactic</span>
+                            <span class="card-arrow">↗</span>
+                        </button>
+
+                        <button class="suggestion-card" data-question="What is castling in chess?">
+                            <span class="suggestion-icon">♚</span>
+                            <span class="suggestion-title">Explain castling</span>
+                            <span class="suggestion-subtitle">Understand king safety</span>
+                            <span class="card-arrow">↗</span>
+                        </button>
+
+                        <button class="suggestion-card" data-question="What is a fork in chess?">
+                            <span class="suggestion-icon">♞</span>
+                            <span class="suggestion-title">What is a fork?</span>
+                            <span class="suggestion-subtitle">Discover tactical attacks</span>
+                            <span class="card-arrow">↗</span>
+                        </button>
+
+                        <button class="suggestion-card" data-question="What are the basic opening principles in chess?">
+                            <span class="suggestion-icon">♜</span>
+                            <span class="suggestion-title">Opening principles</span>
+                            <span class="suggestion-subtitle">Start your game well</span>
+                            <span class="card-arrow">↗</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="messages" id="messages"></div>
+
+            </section>
+
+            <footer class="composer-area">
+                <form id="chatForm" class="composer">
+                    <textarea
+                        id="questionInput"
+                        placeholder="Ask anything about chess..."
+                        rows="1"
+                        maxlength="2000"
+                        required
+                    ></textarea>
+
+                    <button type="submit" id="sendBtn" aria-label="Send message">
+                        ↑
+                    </button>
+                </form>
+
+                <p class="composer-note">
+                    Chaturanga AI can make mistakes. Verify important chess rules.
+                </p>
+            </footer>
+
+        </main>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>

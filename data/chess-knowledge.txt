@@ -1,0 +1,61 @@
+CHESS FUNDAMENTALS
+
+Chess is a two-player strategy game played on an 8x8 board. Each player starts with sixteen pieces: one king, one queen, two rooks, two bishops, two knights, and eight pawns.
+
+The main objective of chess is to checkmate the opponent's king. Checkmate occurs when the king is under attack and there is no legal move that can remove the threat.
+
+The king moves one square in any direction.
+
+The queen can move any number of squares horizontally, vertically, or diagonally.
+
+The rook can move any number of squares horizontally or vertically.
+
+The bishop can move any number of squares diagonally.
+
+The knight moves in an L-shaped pattern: two squares in one direction and one square perpendicular to it. The knight can jump over other pieces.
+
+Pawns normally move forward one square. From their starting position, a pawn may move forward two squares if the path is clear. Pawns capture diagonally forward.
+
+Castling is a special move involving the king and a rook. It is used to move the king toward safety and develop the rook. Castling is only legal when the relevant conditions are satisfied.
+
+OPENING PRINCIPLES
+
+In the opening, chess players generally aim to develop their pieces, control the center, and ensure king safety.
+
+The four central squares are d4, e4, d5, and e5. Controlling the center gives pieces greater mobility and influence.
+
+Developing pieces means bringing pieces from their starting squares to useful active squares. Knights and bishops are commonly developed early in the game.
+
+Moving the same piece repeatedly in the opening can waste valuable time when other pieces still need development.
+
+King safety is an important opening principle. Castling is one common way to move the king to a safer position while connecting the rooks.
+
+CHESS TACTICS
+
+A fork is a tactic in which one piece attacks two or more enemy pieces simultaneously.
+
+A pin occurs when a piece cannot move without exposing a more valuable piece behind it, often the king.
+
+A skewer is a tactic in which a valuable piece is attacked and forced to move, exposing a less valuable piece behind it.
+
+A discovered attack occurs when moving one piece reveals an attack from another piece behind it.
+
+A double attack occurs when one move creates two threats at the same time.
+
+CHESS STRATEGY
+
+A passed pawn is a pawn that has no opposing pawn on its own file or adjacent files that can stop it from advancing.
+
+An outpost is a strategically useful square, often in enemy territory, where a piece can be established and cannot easily be attacked by enemy pawns.
+
+Open files are files without pawns. Rooks can often become more active on open files.
+
+King activity is particularly important in many endgames because there are fewer pieces on the board and the king can participate more actively.
+
+ENDGAME
+
+The opposition is an important concept in king and pawn endgames. It occurs when the kings face each other with an odd number of squares between them, allowing one king to control key squares.
+
+In many pawn endgames, the goal is to promote a pawn into a more powerful piece, usually a queen.
+
+A passed pawn can become a major advantage in an endgame because it may be able to advance toward promotion without being blocked by an opposing pawn.

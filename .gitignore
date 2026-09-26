@@ -1,0 +1,26 @@
+# Environment variables and secrets
+.env
+.env.*
+!.env.example
+
+# Python virtual environments
+venv/
+.venv/
+
+# Python cache
+__pycache__/
+*.py[cod]
+
+# Local Qdrant database
+qdrant_storage/
+
+# SQLite databases
+*.db
+*.sqlite
+*.sqlite3
+
+# macOS files
+.DS_Store
+
+# IDE settings
+.vscode/
