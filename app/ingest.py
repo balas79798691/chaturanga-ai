@@ -1,4 +1,4 @@
-
+import re
 import os
 from uuid import uuid4
 
@@ -15,8 +15,10 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATA_FILE = os.path.join(BASE_DIR, "data", "chess-knowledge.txt")
 QDRANT_PATH = os.path.join(BASE_DIR, "qdrant_storage")
 
-COLLECTION_NAME = "chess_knowledge"
+COLLECTION_NAME = "chess_knowledge_v4"
 MODEL_NAME = "all-MiniLM-L6-v2"
+
+
 
 CHUNK_SIZE = 500
 CHUNK_OVERLAP = 100
@@ -29,22 +31,93 @@ def load_documents():
 
 
 def chunk_text(text):
-    """Split text into overlapping chunks."""
+    """Split text into chunks while preserving heading hierarchy."""
+
+    heading_pattern = re.compile(
+        r"^(#{1,3}\s+.+|[A-Z][A-Z0-9 _—-]{3,})$",
+        re.MULTILINE
+    )
+
+    matches = list(heading_pattern.finditer(text))
+    sections = []
+    heading_stack = []
+
+    for i, match in enumerate(matches):
+        heading = match.group().strip()
+        start = match.start()
+        end = (
+            matches[i + 1].start()
+            if i + 1 < len(matches)
+            else len(text)
+        )
+
+        body = text[match.end():end].strip()
+
+        if heading.startswith("#"):
+            level = len(heading) - len(heading.lstrip("#"))
+        else:
+            level = 1
+
+        while heading_stack and heading_stack[-1][0] >= level:
+            heading_stack.pop()
+
+        heading_stack.append((level, heading))
+
+        context = "\n".join(
+            item[1] for item in heading_stack
+        )
+
+        sections.append((context, body))
+
     chunks = []
-    start = 0
 
-    while start < len(text):
-        end = start + CHUNK_SIZE
-        chunk = text[start:end].strip()
+    for context, body in sections:
+        prefix = f"{context}\n\n"
+        max_body_size = CHUNK_SIZE - len(prefix)
 
-        if chunk:
-            chunks.append(chunk)
+        if max_body_size <= 0:
+            continue
 
-        start += CHUNK_SIZE - CHUNK_OVERLAP
+        paragraphs = [
+            p.strip()
+            for p in body.split("\n\n")
+            if p.strip()
+        ]
+
+        current_chunk = ""
+
+        for paragraph in paragraphs:
+            candidate = (
+                f"{current_chunk}\n\n{paragraph}"
+                if current_chunk else paragraph
+            )
+
+            if len(candidate) <= max_body_size:
+                current_chunk = candidate
+            else:
+                if current_chunk:
+                    chunks.append(prefix + current_chunk)
+
+                if len(paragraph) > max_body_size:
+                    start = 0
+
+                    while start < len(paragraph):
+                        end = start + max_body_size
+                        chunk = paragraph[start:end].strip()
+
+                        if chunk:
+                            chunks.append(prefix + chunk)
+
+                        start += max_body_size - CHUNK_OVERLAP
+
+                    current_chunk = ""
+                else:
+                    current_chunk = paragraph
+
+        if current_chunk:
+            chunks.append(prefix + current_chunk)
 
     return chunks
-
-
 def ingest_documents():
     """Generate embeddings and store them in Qdrant."""
 

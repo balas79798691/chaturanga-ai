@@ -16,7 +16,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(BASE_DIR / ".env")
 
 MODEL_NAME = "all-MiniLM-L6-v2"
-COLLECTION_NAME = "chess_knowledge"
+COLLECTION_NAME = "chess_knowledge_v4"
 SIMILARITY_THRESHOLD = 0.4
 TOP_K = 3
 

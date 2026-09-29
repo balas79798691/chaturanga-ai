@@ -30,6 +30,475 @@ Moving the same piece repeatedly in the opening can waste valuable time when oth
 
 King safety is an important opening principle. Castling is one common way to move the king to a safer position while connecting the rooks.
 
+
+# CHESS OPENINGS
+
+==================================================
+# 1. LONDON SYSTEM
+==================================================
+
+Category: Queen's Pawn Opening
+Usually played by: White
+Starting move: 1. d4
+
+## Main Move Sequence
+
+1. d4 d5
+2. Bf4 Nf6
+3. e3 e6
+4. Nf3 Bd6
+5. Bg3 O-O
+6. Bd3 c5
+7. c3 Nc6
+
+This is one common setup, but the London System has many move orders and variations.
+
+## Opening Ideas
+
+The London System is a solid opening system for White that usually begins with 1. d4 and develops the light-squared bishop to f4.
+
+White builds a stable pawn structure and develops pieces naturally.
+
+The typical setup includes:
+- Pawn on d4.
+- Bishop on f4.
+- Pawns on e3 and c3.
+- Knights on f3 and d2.
+- Dark-squared bishop often developed to d3.
+
+## White's Strategic Plans
+
+1. Develop pieces without creating unnecessary weaknesses.
+2. Control the central squares e5 and d4.
+3. Consider a kingside attack with Ne5, f4, and sometimes Qf3 or Qh5.
+4. Use c4 to challenge Black's center when appropriate.
+5. Keep the king safe through castling.
+
+## Black's Strategic Plans
+
+1. Challenge White's central pawn structure with ...c5 or ...e5 when appropriate.
+2. Develop knights and bishops actively.
+3. Use ...Qb6 to pressure b2 in suitable positions.
+4. Seek central counterplay and avoid passive development.
+
+## Common Mistakes
+
+- Developing the bishop to f4 without considering whether it can be challenged.
+- Launching a kingside attack before completing development.
+- Playing c3 automatically when a more active central move is available.
+- Ignoring Black's central counterplay.
+
+## Typical Middlegame Plans
+
+White often plays Ne5, f4, and sometimes a kingside pawn advance. Black often challenges the center with ...c5 and develops pressure against d4.
+
+Important note:
+The London System is a family of setups, not a single forced sequence.
+
+
+==================================================
+# 2. SICILIAN DEFENSE
+==================================================
+
+Category: Semi-Open Defense
+Usually played by: Black
+Starting moves: 1. e4 c5
+
+## Main Move Sequence
+
+1. e4 c5
+2. Nf3 d6
+3. d4 cxd4
+4. Nxd4 Nf6
+5. Nc3 a6
+
+This is the starting position of the Najdorf Variation after 5...a6.
+
+The Sicilian Defense has many major variations, including the Najdorf, Dragon, Classical, Scheveningen, and Sveshnikov.
+
+## Opening Ideas
+
+The Sicilian Defense is a response to 1. e4 in which Black plays 1...c5.
+
+Black challenges White's central control asymmetrically rather than mirroring White's e-pawn.
+
+After an exchange on d4, Black often obtains a central pawn majority on the queenside while White may have more central space.
+
+## Black's Strategic Plans
+
+1. Challenge White's central control.
+2. Develop the knights and bishops actively.
+3. Use the semi-open c-file for rook activity.
+4. Seek queenside counterplay with ...b5 and ...Bb7 in suitable variations.
+5. Create counterattacking opportunities against White's king.
+
+## White's Strategic Plans
+
+1. Develop quickly and maintain central control.
+2. Use the d-file and central squares to pressure Black's position.
+3. Consider kingside attacks in sharp variations.
+4. Control key squares such as d5.
+5. Avoid allowing Black to build unrestricted queenside counterplay.
+
+## Common Variations
+
+### Najdorf Variation
+1. e4 c5
+2. Nf3 d6
+3. d4 cxd4
+4. Nxd4 Nf6
+5. Nc3 a6
+
+The move ...a6 controls b5 and prepares queenside expansion.
+
+### Dragon Variation
+1. e4 c5
+2. Nf3 d6
+3. d4 cxd4
+4. Nxd4 Nf6
+5. Nc3 g6
+
+Black fianchettoes the bishop to g7 and places pressure along the long diagonal.
+
+### Classical Variation
+1. e4 c5
+2. Nf3 d6
+3. d4 cxd4
+4. Nxd4 Nf6
+5. Nc3 Nc6
+
+Black develops the knight to c6 and prepares further development.
+
+## Common Mistakes
+
+- Playing ...d5 without sufficient preparation.
+- Ignoring White's central space and development.
+- Attacking on the queenside without completing development.
+- Failing to recognize tactical threats against the king.
+
+## Typical Middlegame Plans
+
+Black often seeks queenside counterplay and pressure along the c-file. White often uses central space and may launch a kingside attack depending on the variation.
+
+Important note:
+The Sicilian Defense is a broad family of openings with many different pawn structures and strategic plans.
+
+
+==================================================
+# 3. RUY LOPEZ
+==================================================
+
+Category: Open Game
+Usually played by: White
+Starting moves: 1. e4 e5 2. Nf3 Nc6 3. Bb5
+
+## Main Move Sequence
+
+1. e4 e5
+2. Nf3 Nc6
+3. Bb5 a6
+4. Ba4 Nf6
+5. O-O Be7
+6. Re1 b5
+7. Bb3 d6
+
+This is one common line in the Closed Ruy Lopez.
+
+## Opening Ideas
+
+The Ruy Lopez is a classical opening in which White develops the bishop to b5, putting indirect pressure on Black's e5 pawn by attacking the knight on c6.
+
+White aims for strong central control, active development, and long-term positional pressure.
+
+## White's Strategic Plans
+
+1. Castle kingside and complete development.
+2. Maintain pressure against Black's central pawn structure.
+3. Prepare c3 and d4 to establish a strong center.
+4. Improve the position of the bishop, which may retreat to c2 or a4.
+5. Seek favorable middlegame positions through piece coordination.
+
+## Black's Strategic Plans
+
+1. Defend the e5 pawn and maintain central control.
+2. Use ...a6 and ...b5 to gain queenside space and challenge the bishop.
+3. Develop the light-squared bishop to e7 or another suitable square.
+4. Prepare ...d5 or ...c5 when appropriate.
+5. Counter White's central expansion.
+
+## Common Variations
+
+### Morphy Defense
+1. e4 e5
+2. Nf3 Nc6
+3. Bb5 a6
+
+Black immediately questions the bishop's position with ...a6.
+
+### Berlin Defense
+1. e4 e5
+2. Nf3 Nc6
+3. Bb5 Nf6
+
+Black develops the knight to f6 and challenges White's e4 pawn.
+
+### Exchange Variation
+1. e4 e5
+2. Nf3 Nc6
+3. Bb5 a6
+4. Bxc6 dxc6
+
+White exchanges the bishop for the knight, giving Black doubled c-pawns in exchange for the bishop pair.
+
+## Common Mistakes
+
+- Moving the bishop repeatedly without a clear plan.
+- Playing d4 before sufficient preparation.
+- Ignoring the defense of the e4 pawn.
+- Allowing Black to gain central counterplay without resistance.
+
+## Typical Middlegame Plans
+
+White often prepares c3 and d4, followed by piece maneuvers and pressure against Black's center.
+
+Black often seeks counterplay with ...d5 or ...c5 and uses the bishop pair or queenside space to generate activity.
+
+
+==================================================
+# 4. ITALIAN GAME
+==================================================
+
+Category: Open Game
+Usually played by: White
+Starting moves: 1. e4 e5 2. Nf3 Nc6 3. Bc4
+
+## Main Move Sequence
+
+1. e4 e5
+2. Nf3 Nc6
+3. Bc4 Bc5
+4. c3 Nf6
+5. d3 d6
+6. O-O O-O
+
+This is a common quiet Italian setup.
+
+## Opening Ideas
+
+The Italian Game develops White's bishop to c4, where it targets the f7 square near Black's king.
+
+White aims for rapid development, central control, and active piece coordination.
+
+The opening can lead to both quiet positional play and sharp tactical positions.
+
+## White's Strategic Plans
+
+1. Develop the bishop to c4 and knights to f3 and c3 or d2.
+2. Castle kingside to improve king safety.
+3. Prepare d4 to challenge Black's center.
+4. Use the bishop's pressure against f7 to create tactical opportunities.
+5. Improve piece coordination before launching an attack.
+
+## Black's Strategic Plans
+
+1. Develop pieces naturally and protect the center.
+2. Castle kingside when appropriate.
+3. Challenge White's center with ...d5 when possible.
+4. Use ...Nf6 and ...d6 to support central control.
+5. Seek counterplay through active piece development.
+
+## Common Variations
+
+### Giuoco Piano
+1. e4 e5
+2. Nf3 Nc6
+3. Bc4 Bc5
+
+Black mirrors White's bishop development.
+
+### Giuoco Pianissimo
+1. e4 e5
+2. Nf3 Nc6
+3. Bc4 Bc5
+4. d3
+
+White chooses a quieter setup, prioritizing development and central control.
+
+### Two Knights Defense
+1. e4 e5
+2. Nf3 Nc6
+3. Bc4 Nf6
+
+Black develops the knight to f6 and attacks White's e4 pawn.
+
+## Common Mistakes
+
+- Attacking f7 without sufficient support.
+- Delaying castling while launching premature attacks.
+- Playing d4 without checking whether the center is adequately supported.
+- Ignoring Black's central counterplay.
+
+## Typical Middlegame Plans
+
+White often prepares d4 or uses a slower setup with d3 and c3. Black aims to complete development and challenge White's center.
+
+Important note:
+The Italian Game and Ruy Lopez both begin with 1. e4 e5 2. Nf3 Nc6, but their bishop moves differ: Bc4 in the Italian and Bb5 in the Ruy Lopez.
+
+
+==================================================
+# 5. KING'S GAMBIT
+==================================================
+
+Category: Open Game
+Usually played by: White
+Starting moves: 1. e4 e5 2. f4
+
+## Main Move Sequence
+
+1. e4 e5
+2. f4 exf4
+3. Nf3 g5
+4. Bc4 g4
+5. O-O
+
+This is an illustrative line in the King's Gambit Accepted. Black's and White's choices can lead to many different variations.
+
+## Opening Ideas
+
+The King's Gambit is an aggressive opening in which White offers the f-pawn to challenge Black's e5 pawn and open lines.
+
+White aims for rapid development, central control, and attacking chances against the black king.
+
+Black can accept the gambit by capturing the f4 pawn or decline it with other moves.
+
+## White's Strategic Plans
+
+1. Develop quickly and seek active piece play.
+2. Use the open f-file when available.
+3. Challenge Black's central control.
+4. Create attacking chances against the king.
+5. Recover the sacrificed pawn when possible without compromising development.
+
+## Black's Strategic Plans
+
+1. Decide whether to accept or decline the gambit.
+2. If accepting, try to consolidate the extra pawn.
+3. Develop pieces and maintain king safety.
+4. Challenge White's center and exploit weaknesses created by f2-f4.
+5. Avoid making unnecessary pawn moves while under pressure.
+
+## Common Variations
+
+### King's Gambit Accepted
+1. e4 e5
+2. f4 exf4
+
+Black accepts the offered pawn.
+
+### King's Gambit Declined
+1. e4 e5
+2. f4 Bc5
+
+Black declines the pawn and develops the bishop actively.
+
+### King's Knight Gambit
+1. e4 e5
+2. f4 exf4
+3. Nf3
+
+White develops the knight and prepares to challenge Black's position.
+
+## Common Mistakes
+
+- Sacrificing the f-pawn without a clear attacking plan.
+- Neglecting king safety after moving the f-pawn.
+- Trying to recover the gambit pawn at the cost of development.
+- For Black, holding the extra pawn while allowing White a strong attack.
+
+## Typical Middlegame Plans
+
+White often seeks active piece play, open lines, and attacking chances. Black aims to consolidate material, complete development, and exploit weaknesses around White's king.
+
+Important note:
+The King's Gambit is a sharp opening. The best plans depend heavily on whether Black accepts or declines the gambit.
+
+
+==================================================
+# 6. CATALAN OPENING
+==================================================
+
+Category: Closed Game / Queen's Pawn Opening
+Usually played by: White
+Starting moves: 1. d4 Nf6 2. c4 e6 3. g3
+
+## Main Move Sequence
+
+1. d4 Nf6
+2. c4 e6
+3. g3 d5
+4. Bg2 Be7
+5. Nf3 O-O
+6. O-O
+
+This is a common setup in the Closed Catalan.
+
+## Opening Ideas
+
+The Catalan Opening combines a Queen's Pawn setup with a fianchetto of White's light-squared bishop to g2.
+
+White aims for long-term pressure along the long diagonal and sustained control of central and queenside squares.
+
+The Catalan can lead to positional pressure and endgames in which White seeks to exploit structural advantages.
+
+## White's Strategic Plans
+
+1. Develop the bishop to g2 and place pressure along the long diagonal.
+2. Control the center with d4 and c4.
+3. Develop knights to f3 and c3 or other suitable squares.
+4. Use the bishop's pressure against Black's queenside and central pawns.
+5. Seek favorable endgames or long-term positional pressure.
+
+## Black's Strategic Plans
+
+1. Challenge White's center with ...d5 or other central breaks.
+2. Develop pieces and complete castling.
+3. Decide whether to capture on c4 in the Open Catalan or maintain the central tension in the Closed Catalan.
+4. Seek counterplay on the queenside and in the center.
+5. Avoid allowing White's fianchettoed bishop to dominate the long diagonal.
+
+## Common Variations
+
+### Closed Catalan
+1. d4 Nf6
+2. c4 e6
+3. g3 d5
+4. Bg2 Be7
+
+Black maintains the central pawn structure and develops normally.
+
+### Open Catalan
+1. d4 Nf6
+2. c4 e6
+3. g3 d5
+4. Bg2 dxc4
+
+Black captures the c4 pawn and temporarily challenges White's center.
+
+## Common Mistakes
+
+- Failing to develop the fianchettoed bishop effectively.
+- Ignoring Black's central counterplay.
+- Attempting to recover the c4 pawn too quickly in the Open Catalan.
+- Allowing Black to establish a strong center without challenging it.
+
+## Typical Middlegame Plans
+
+White often uses the bishop on g2 to pressure the center and queenside. Black seeks counterplay through central breaks and queenside activity.
+
+Important note:
+The Catalan is a positional opening in which long-term piece activity and pawn structure often matter more than immediate attacks.
+
 CHESS TACTICS
 
 A fork is a tactic in which one piece attacks two or more enemy pieces simultaneously.
@@ -59,3 +528,574 @@ The opposition is an important concept in king and pawn endgames. It occurs when
 In many pawn endgames, the goal is to promote a pawn into a more powerful piece, usually a queen.
 
 A passed pawn can become a major advantage in an endgame because it may be able to advance toward promotion without being blocked by an opposing pawn.
+
+# CHESS OPENING PRINCIPLES
+
+## 1. Control the Center
+
+The four central squares are e4, d4, e5, and d5. Controlling these squares helps pieces gain mobility and influence the board.
+
+Central control can be achieved by occupying the center with pawns or controlling it with pieces.
+
+Example:
+Playing 1. e4 or 1. d4 occupies a central square and opens lines for other pieces.
+
+Important note:
+Central control does not always require occupying the center with pawns. Some openings allow the opponent to occupy the center before challenging it.
+
+## 2. Develop Minor Pieces Early
+
+Minor pieces are knights and bishops. Developing them means moving them from their starting squares to more active squares.
+
+Developing pieces helps control central squares, prepare for castling, and improve coordination.
+
+Example:
+In many openings, developing a knight to f3 or c3 as White helps control central squares.
+
+Important note:
+Avoid moving the same piece repeatedly in the opening without a clear reason, especially when other pieces remain undeveloped.
+
+## 3. Castle for King Safety
+
+Castling moves the king toward a safer position and brings a rook closer to the center.
+
+Castling is often useful after developing some minor pieces.
+
+Example:
+Kingside castling moves the king from e1 to g1 for White and from e8 to g8 for Black.
+
+Important note:
+Castling is not always the best immediate move. Consider the opponent's threats, pawn structure, and whether the king's destination is safe.
+
+## 4. Avoid Premature Queen Development
+
+Moving the queen too early can allow the opponent to develop pieces while attacking it.
+
+This may cause the queen to move repeatedly, wasting time that could be used for development.
+
+Important note:
+Early queen development can be justified when it creates a concrete threat or wins material safely.
+
+## 5. Avoid Unnecessary Pawn Moves
+
+Pawn moves help control space, but too many pawn moves can delay piece development and create weaknesses.
+
+In the opening, prioritize developing pieces and securing king safety while making purposeful pawn moves.
+
+Important note:
+Some openings require several pawn moves to establish a specific structure or challenge the center.
+
+## 6. Connect the Rooks
+
+Rooks are connected when no pieces remain between them on their back rank.
+
+Developing minor pieces and castling often helps connect the rooks.
+
+Connected rooks can support open files and coordinate more effectively.
+
+## 7. Develop With a Purpose
+
+A good developing move improves a piece's activity, supports central control, protects the king, or prepares a useful plan.
+
+Before developing a piece, consider where it will be most effective and how it fits into the position.
+
+## 8. Respond to the Opponent's Threats
+
+Opening principles are guidelines, not absolute rules.
+
+Before making a move, check whether the opponent threatens a piece, a tactical combination, or a direct attack on the king.
+
+A move that follows a general principle can still be a mistake if it ignores an immediate threat.
+
+## 9. Avoid Moving the King Unnecessarily
+
+Moving the king early without a concrete reason can delay development and expose it to attacks.
+
+Keep the king safe while developing pieces and preparing for castling.
+
+## 10. Opening Principles Summary
+
+The main goals of the opening are:
+- Control or challenge the center.
+- Develop knights and bishops.
+- Protect the king.
+- Connect the rooks.
+- Avoid unnecessary moves.
+- Recognize and respond to tactical threats.
+
+# CHESS OPENINGS — PART 2
+
+==================================================
+# 7. QUEEN'S GAMBIT
+==================================================
+
+Category: Queen's Pawn Opening
+Usually played by: White
+Starting moves: 1. d4 d5 2. c4
+
+## Main Move Sequence
+
+1. d4 d5
+2. c4 e6
+3. Nc3 Nf6
+4. Nf3 Be7
+5. Bg5 O-O
+
+This is a common line in the Queen's Gambit Declined.
+
+## Opening Ideas
+
+The Queen's Gambit is a chess opening in which White offers the c-pawn to challenge Black's central d5 pawn.
+
+If Black captures on c4, White can often recover the pawn while gaining central control.
+
+The Queen's Gambit is not a true gambit in many lines because White can usually regain the pawn.
+
+## White's Strategic Plans
+
+1. Control the center with d4 and c4.
+2. Develop knights and bishops actively.
+3. Prepare e3 and develop the light-squared bishop.
+4. Apply pressure against Black's central pawns.
+5. Use the c-file and queenside space for long-term pressure.
+
+## Black's Strategic Plans
+
+1. Maintain or challenge central control.
+2. Develop pieces and protect the d5 pawn.
+3. Choose between accepting the gambit or maintaining the central pawn structure.
+4. Seek counterplay with ...c5 or ...e5 when appropriate.
+
+## Common Variations
+
+### Queen's Gambit Accepted
+1. d4 d5
+2. c4 dxc4
+
+Black captures the c4 pawn and temporarily gives up central control.
+
+### Queen's Gambit Declined
+1. d4 d5
+2. c4 e6
+
+Black supports the d5 pawn and maintains a strong central structure.
+
+### Slav Defense
+1. d4 d5
+2. c4 c6
+
+Black supports the d5 pawn with the c-pawn while keeping the light-squared bishop's diagonal open.
+
+## Common Mistakes
+
+- Trying to hold the c4 pawn at all costs.
+- Neglecting development to defend pawns.
+- Allowing White to build an uncontested central pawn structure.
+- Ignoring central breaks and tactical threats.
+
+## Typical Middlegame Plans
+
+White often pressures the center and queenside. Black seeks counterplay through central pawn breaks and active piece development.
+
+
+==================================================
+# 8. KING'S INDIAN DEFENSE
+==================================================
+
+Category: Indian Defense
+Usually played by: Black
+Starting moves: 1. d4 Nf6 2. c4 g6
+
+## Main Move Sequence
+
+1. d4 Nf6
+2. c4 g6
+3. Nc3 Bg7
+4. e4 d6
+5. Nf3 O-O
+6. Be2 e5
+
+This is a common starting setup for the Classical King's Indian Defense.
+
+## Opening Ideas
+
+The King's Indian Defense is a hypermodern opening in which Black allows White to occupy the center with pawns before challenging it.
+
+Black fianchettoes the dark-squared bishop to g7 and prepares counterplay against White's central structure.
+
+## Black's Strategic Plans
+
+1. Develop the bishop to g7.
+2. Castle kingside and complete development.
+3. Challenge White's center with ...e5 or ...c5.
+4. Seek kingside attacking chances in suitable positions.
+5. Use pawn breaks to create counterplay.
+
+## White's Strategic Plans
+
+1. Establish central space with d4 and e4.
+2. Develop pieces and maintain central control.
+3. Prepare queenside expansion with c5 or b4 in suitable positions.
+4. Challenge Black's central pawn structure.
+5. Avoid allowing Black's kingside attack to become dangerous.
+
+## Common Variations
+
+### Classical Variation
+1. d4 Nf6
+2. c4 g6
+3. Nc3 Bg7
+4. e4 d6
+5. Nf3 O-O
+6. Be2 e5
+
+Black challenges White's center with ...e5.
+
+### Sämisch Variation
+1. d4 Nf6
+2. c4 g6
+3. Nc3 Bg7
+4. e4 d6
+5. f3
+
+White supports the center and prepares a setup that may allow kingside or central expansion.
+
+### Fianchetto Variation
+1. d4 Nf6
+2. c4 g6
+3. g3 Bg7
+
+White develops the bishop to g2 and adopts a fianchetto setup.
+
+## Common Mistakes
+
+- Allowing White to build a strong center without counterplay.
+- Playing ...e5 or ...c5 without considering the resulting pawn structure.
+- Attacking on the kingside before completing development.
+- For White, ignoring Black's pawn breaks and attacking plans.
+
+## Typical Middlegame Plans
+
+Black often seeks kingside play and central breaks. White often expands on the queenside or challenges Black's center.
+
+Important note:
+The King's Indian Defense often leads to strategically complex positions in which both sides attack on opposite wings.
+
+
+==================================================
+# 9. FRENCH DEFENSE
+==================================================
+
+Category: Semi-Open Defense
+Usually played by: Black
+Starting moves: 1. e4 e6
+
+## Main Move Sequence
+
+1. e4 e6
+2. d4 d5
+3. Nc3 Nf6
+4. e5 Nfd7
+5. f4 c5
+
+This is one common line in the Classical French Defense.
+
+## Opening Ideas
+
+The French Defense begins with 1...e6 and challenges White's e4 pawn with ...d5.
+
+Black builds a solid pawn structure and often seeks counterplay against White's central pawns.
+
+The light-squared bishop on c8 can become restricted by Black's own pawn structure.
+
+## Black's Strategic Plans
+
+1. Challenge White's center with ...d5 and ...c5.
+2. Develop the knights and dark-squared bishop actively.
+3. Seek counterplay against White's d4 pawn.
+4. Use the ...f6 break when appropriate to challenge White's e5 pawn.
+5. Find useful squares for the light-squared bishop.
+
+## White's Strategic Plans
+
+1. Establish central space with e4 and d4.
+2. Develop pieces while supporting the center.
+3. Use the space advantage to restrict Black's pieces.
+4. Prepare kingside or queenside attacks depending on the variation.
+5. Maintain central control while responding to ...c5 and ...f6.
+
+## Common Variations
+
+### Advance Variation
+1. e4 e6
+2. d4 d5
+3. e5
+
+White advances the e-pawn and gains space.
+
+### Exchange Variation
+1. e4 e6
+2. d4 d5
+3. exd5 exd5
+
+White exchanges the central pawns, often leading to a more symmetrical structure.
+
+### Tarrasch Variation
+1. e4 e6
+2. d4 d5
+3. Nd2
+
+White develops the knight to d2 and supports the center.
+
+### Winawer Variation
+1. e4 e6
+2. d4 d5
+3. Nc3 Bb4
+
+Black pins the knight on c3 and creates an asymmetrical position.
+
+## Common Mistakes
+
+- Allowing White to maintain an uncontested center.
+- Playing ...f6 without sufficient preparation.
+- Neglecting the development of the light-squared bishop.
+- For White, failing to defend the central pawns adequately.
+
+## Typical Middlegame Plans
+
+Black often challenges White's center with ...c5 and ...f6. White seeks to use central space and coordinate pieces for an attack or positional pressure.
+
+
+==================================================
+# 10. CARO-KANN DEFENSE
+==================================================
+
+Category: Semi-Open Defense
+Usually played by: Black
+Starting moves: 1. e4 c6
+
+## Main Move Sequence
+
+1. e4 c6
+2. d4 d5
+3. Nc3 dxe4
+4. Nxe4 Bf5
+5. Ng3 Bg6
+
+This is a common line in the Classical Caro-Kann Defense.
+
+## Opening Ideas
+
+The Caro-Kann Defense begins with 1...c6 and prepares ...d5 to challenge White's e4 pawn.
+
+Black aims for a solid pawn structure and often develops the light-squared bishop outside the pawn chain.
+
+The Caro-Kann is known for its solid structure and flexible development.
+
+## Black's Strategic Plans
+
+1. Challenge White's center with ...d5.
+2. Develop the light-squared bishop actively before playing ...e6 when appropriate.
+3. Complete development and castle.
+4. Seek central breaks and active piece play.
+5. Maintain a sound pawn structure while creating counterplay.
+
+## White's Strategic Plans
+
+1. Establish central control with d4.
+2. Develop pieces actively and complete castling.
+3. Use space to restrict Black's pieces.
+4. Challenge Black's central pawn structure.
+5. Seek active piece placement and favorable pawn breaks.
+
+## Common Variations
+
+### Classical Variation
+1. e4 c6
+2. d4 d5
+3. Nc3 dxe4
+4. Nxe4 Bf5
+
+Black develops the light-squared bishop outside the pawn chain.
+
+### Advance Variation
+1. e4 c6
+2. d4 d5
+3. e5
+
+White gains central space and restricts Black's pieces.
+
+### Exchange Variation
+1. e4 c6
+2. d4 d5
+3. exd5 cxd5
+
+White exchanges the central pawn, leading to a more open structure.
+
+### Fantasy Variation
+1. e4 c6
+2. d4 d5
+3. f3
+
+White supports the center with an aggressive setup.
+
+## Common Mistakes
+
+- Allowing White to build a strong center without challenging it.
+- Developing the light-squared bishop poorly.
+- Making unnecessary pawn moves instead of completing development.
+- For White, advancing the center without considering Black's counterplay.
+
+## Typical Middlegame Plans
+
+Black often challenges the center with ...c5 or ...e5 when appropriate. White uses central space and piece activity to create pressure.
+
+
+==================================================
+# 11. SCANDINAVIAN DEFENSE
+==================================================
+
+Category: Semi-Open Defense
+Usually played by: Black
+Starting moves: 1. e4 d5
+
+## Main Move Sequence
+
+1. e4 d5
+2. exd5 Qxd5
+3. Nc3 Qa5
+4. d4 Nf6
+5. Nf3 c6
+
+This is a common setup in the Scandinavian Defense with ...Qa5.
+
+## Opening Ideas
+
+The Scandinavian Defense immediately challenges White's e4 pawn with 1...d5.
+
+After White captures on d5, Black can recapture with the queen or choose another recapture system.
+
+The queen recapture allows Black to establish a central presence but may require the queen to move again.
+
+## Black's Strategic Plans
+
+1. Challenge White's center immediately.
+2. Develop pieces quickly after the queen recaptures.
+3. Avoid moving the queen repeatedly without a concrete reason.
+4. Build a sound central pawn structure.
+5. Seek counterplay through ...c6 and ...Nf6 in suitable lines.
+
+## White's Strategic Plans
+
+1. Develop with tempo by attacking the queen when possible.
+2. Control central squares with d4 and active piece development.
+3. Castle and complete development.
+4. Use the lead in development to create pressure.
+5. Avoid allowing Black to establish an easy and comfortable position.
+
+## Common Variations
+
+### Main Queen Recapture
+1. e4 d5
+2. exd5 Qxd5
+3. Nc3
+
+White develops the knight while attacking Black's queen.
+
+### Modern Scandinavian
+1. e4 d5
+2. exd5 Nf6
+
+Black delays the pawn recapture and develops the knight actively.
+
+### Portuguese Variation
+1. e4 d5
+2. exd5 Nf6
+3. d4 Bg4
+
+Black develops the bishop actively and creates tactical possibilities.
+
+## Common Mistakes
+
+- Moving the queen repeatedly without a clear plan.
+- Neglecting development while trying to protect central pawns.
+- Allowing White to build a strong center without counterplay.
+- For White, failing to exploit development opportunities.
+
+## Typical Middlegame Plans
+
+Black seeks a solid structure and active piece development. White often uses the lead in development to pressure Black's position.
+
+
+==================================================
+# 12. ENGLISH OPENING
+==================================================
+
+Category: Flank Opening
+Usually played by: White
+Starting move: 1. c4
+
+## Main Move Sequence
+
+1. c4 e5
+2. Nc3 Nf6
+3. g3 d5
+4. cxd5 Nxd5
+5. Bg2 Nb6
+
+This is one common line in the English Opening.
+
+## Opening Ideas
+
+The English Opening begins with 1. c4 and controls the d5 square from the flank.
+
+White often develops with a fianchetto and may transpose into other openings depending on Black's setup.
+
+The English Opening allows flexible development and a wide range of pawn structures.
+
+## White's Strategic Plans
+
+1. Control d5 with the c-pawn and pieces.
+2. Develop the knight to c3 and bishop to g2.
+3. Castle kingside and complete development.
+4. Prepare d4 or e4 when appropriate.
+5. Use queenside space and piece activity to create pressure.
+
+## Black's Strategic Plans
+
+1. Challenge White's control of the center.
+2. Choose a central setup with ...e5, ...d5, or ...c5.
+3. Develop pieces actively and complete castling.
+4. Avoid allowing White to establish unrestricted control over d5.
+5. Seek counterplay through central breaks and piece activity.
+
+## Common Variations
+
+### Symmetrical English
+1. c4 c5
+
+Black mirrors White's pawn move and challenges the same central squares.
+
+### Reversed Sicilian Setup
+1. c4 e5
+
+Black occupies the center with the e-pawn, leading to structures similar to some Sicilian positions with colors reversed.
+
+### King's English Variation
+1. c4 e5
+
+White adopts a flank opening while Black establishes a central pawn presence.
+
+## Common Mistakes
+
+- Playing c4 without developing pieces or supporting central control.
+- Allowing Black to establish an uncontested center.
+- Delaying castling without a concrete reason.
+- Choosing a central pawn break without considering the resulting structure.
+
+## Typical Middlegame Plans
+
+White often develops with g3, Bg2, and Nc3, then chooses d4 or e4 depending on Black's setup. Black challenges the center and seeks active piece play.
+
+Important note:
+The English Opening is flexible and can transpose into many other openings.

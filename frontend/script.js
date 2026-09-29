@@ -277,6 +277,9 @@ newChatBtn.addEventListener("click", function () {
 
 const chessboard = document.getElementById("chessboard");
 const resetBoardBtn = document.getElementById("resetBoardBtn");
+const undoMoveBtn = document.getElementById("undoMoveBtn");
+const redoMoveBtn = document.getElementById("redoMoveBtn");
+const redoStack = [];
 const turnIndicator = document.getElementById("turnIndicator");
 const moveHistory = document.getElementById("moveHistory");
 
@@ -360,6 +363,10 @@ function renderBoard() {
         }
     }
 }
+function updateUndoRedoButtons() {
+    undoMoveBtn.disabled = game.history().length === 0;
+    redoMoveBtn.disabled = redoStack.length === 0;
+}
 
 function updateGameInfo() {
     // Update turn indicator
@@ -375,6 +382,7 @@ function updateGameInfo() {
         turnIndicator.textContent =
             `${game.turn() === "w" ? "White" : "Black"}'s Turn`;
     }
+    updateUndoRedoButtons();
 
     // Update move history
     const history = game.history();
@@ -439,6 +447,7 @@ function handleSquareClick(squareName) {
 
     if (move) {
         selectedSquare = null;
+        redoStack.length = 0;
         renderBoard();
         updateGameInfo();
 
@@ -468,12 +477,44 @@ function handleSquareClick(squareName) {
 
 function resetBoard() {
     game.reset();
+    redoStack.length = 0;
     selectedSquare = null;
+
+    renderBoard();
+    updateGameInfo();
+}
+function undoMove() {
+    const undoneMove = game.undo();
+
+    if (undoneMove) {
+        redoStack.push(undoneMove);
+        selectedSquare = null;
+
+        renderBoard();
+        updateGameInfo();
+    }
+}
+
+function redoMove() {
+    if (redoStack.length === 0) return;
+
+    const move = redoStack.pop();
+
+    game.move({
+        from: move.from,
+        to: move.to,
+        promotion: move.promotion
+    });
+
+    selectedSquare = null;
+
     renderBoard();
     updateGameInfo();
 }
 
 resetBoardBtn.addEventListener("click", resetBoard);
+undoMoveBtn.addEventListener("click", undoMove);
+redoMoveBtn.addEventListener("click", redoMove);
 
 renderBoard();
 updateGameInfo();

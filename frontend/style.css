@@ -37,6 +37,19 @@ button {
 
 .app-shell {
     display: flex;
+    flex-direction: row;
+    align-items: stretch;
+    width: 100%;
+    min-height: 100vh;
+}
+
+
+
+.chat-main {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-width: 0;
     min-height: 100vh;
 }
 
@@ -638,4 +651,40 @@ button {
 .empty-history {
     color: #a5b5a8;
     text-align: center;
+}
+/* Chessboard controls */
+
+.chessboard-controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+    margin-top: 20px;
+    flex-wrap: wrap;
+}
+
+.chessboard-controls button {
+    background: var(--panel);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    padding: 10px 18px;
+    font-weight: 600;
+    transition: background 0.2s, opacity 0.2s;
+}
+
+.chessboard-controls button:hover:not(:disabled) {
+    background: var(--panel-hover);
+    border-color: var(--gold);
+}
+
+.chessboard-controls button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+#resetBoardBtn {
+    background: var(--gold);
+    color: #172019;
+    border-color: var(--gold);
 }
