@@ -1,67 +1,29 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Chaturanga AI | Chess Assistant</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/dompurify@3.2.6/dist/purify.min.js"></script>
 </head>
 <body>
-    <!-- =============================== -->
-<!-- CHATURANGA AI - CHESSBOARD      -->
-<!-- =============================== -->
+    <!-- App Shell: Unified 3-column / responsive dashboard -->
+    <div class="app-shell">
 
-<div class="chessboard-section">
-
-    <h2>♟ Interactive Chessboard</h2>
-
-    <!-- Chessboard -->
-    <div id="chessboard"></div>
-
-    <!-- Turn Indicator -->
-    <div id="turnIndicator" class="turn-indicator">
-        White's Turn
-    </div>
-
-    <!-- Move History -->
-    <div class="move-history">
-
-        <h3>Move History</h3>
-
-        <div id="moveHistory">
-            <p class="empty-history">No moves yet</p>
-        </div>
-
-    </div>
-
-    <!-- Reset Button -->
-    <div class="chessboard-controls">
-
-    <button id="undoMoveBtn" disabled>
-        ↶ Undo
-    </button>
-
-    <button id="redoMoveBtn" disabled>
-        ↷ Redo
-    </button>
-
-    <button id="resetBoardBtn">
-        Reset Board
-    </button>
-
-</div>
-</div>
-
-<!-- =============================== -->
-<!-- END OF CHESSBOARD SECTION       -->
-<!-- =============================== -->
+        <!-- Mobile Navigation Tabs (visible only on small screens) -->
+        <nav class="mobile-nav-tabs" aria-label="Mobile View Switcher">
+            <button class="mobile-tab-btn active" id="tabBoardBtn" data-view="board">
+                <span>♟</span> Board
+            </button>
+            <button class="mobile-tab-btn" id="tabChatBtn" data-view="chat">
+                <span>💬</span> Chat Assistant
+            </button>
+        </nav>
 
         <!-- Sidebar -->
-    <div class="app-shell">
-        <aside class="sidebar">
+        <aside class="sidebar" id="sidebar">
             <div class="brand">
                 <div class="brand-icon">♞</div>
                 <div>
@@ -74,6 +36,14 @@
                 <span>＋</span> New conversation
             </button>
 
+            <!-- Previous Chats (ChatGPT / Claude style) -->
+            <div class="sidebar-section chats-section">
+                <p class="section-label">RECENT CONVERSATIONS</p>
+                <div id="sessionsList" class="sessions-list">
+                    <p class="empty-sessions">No conversations yet</p>
+                </div>
+            </div>
+
             <div class="sidebar-section">
                 <p class="section-label">EXPLORE CHESS</p>
 
@@ -81,16 +51,20 @@
                     <span>♟</span> Chess fundamentals
                 </button>
 
-                <button class="topic-btn" data-question="Explain chess tactics like forks and pins">
+                <button class="topic-btn" data-question="Explain chess tactics like forks, pins, and skewers">
                     <span>⚔</span> Chess tactics
                 </button>
 
-                <button class="topic-btn" data-question="Explain chess opening principles">
+                <button class="topic-btn" data-question="Explain opening principles like controlling the center and piece development">
                     <span>♜</span> Opening principles
                 </button>
 
-                <button class="topic-btn" data-question="Explain king safety and castling">
+                <button class="topic-btn" data-question="Explain king safety and the rules of castling">
                     <span>♚</span> King safety
+                </button>
+
+                <button class="topic-btn" data-question="Explain the London System opening strategy and key moves">
+                    <span>♞</span> London System
                 </button>
             </div>
 
@@ -101,13 +75,71 @@
             </div>
         </aside>
 
-        <!-- Main chat -->
-        <main class="chat-main">
+        <!-- Center: Interactive Chessboard Panel -->
+        <section class="chessboard-section" id="chessboardSection">
+            <div class="section-header">
+                <h2>♟ Interactive Chessboard</h2>
+                <p class="section-subtitle">Play moves and ask the AI for analysis</p>
+            </div>
+
+            <!-- Chessboard -->
+            <div class="chessboard-wrapper">
+                <div id="chessboard"></div>
+            </div>
+
+            <!-- Turn & Game State Indicator -->
+            <div id="turnIndicator" class="turn-indicator">
+                White's Turn
+            </div>
+
+            <!-- Primary Board Action: Ask AI about current position -->
+            <button id="askAiPosBtn" class="ask-ai-pos-btn">
+                <span>💡</span> Ask AI About This Position
+            </button>
+
+            <!-- Chessboard Controls -->
+            <div class="chessboard-controls">
+                <button id="undoMoveBtn" title="Undo move" disabled>
+                    ↶ Undo
+                </button>
+                <button id="redoMoveBtn" title="Redo move" disabled>
+                    ↷ Redo
+                </button>
+                <button id="flipBoardBtn" title="Flip board perspective">
+                    ⇄ Flip
+                </button>
+                <button id="copyFenBtn" title="Copy FEN string">
+                    📋 Copy FEN
+                </button>
+                <button id="resetBoardBtn" class="btn-reset" title="Reset to start">
+                    ↺ Reset
+                </button>
+            </div>
+
+            <!-- Move History -->
+            <div class="move-history">
+                <div class="move-history-header">
+                    <h3>Move History</h3>
+                    <span id="moveCountBadge" class="move-count-badge">0 moves</span>
+                </div>
+                <div id="moveHistory">
+                    <p class="empty-history">No moves yet</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Right: Main Chat Area -->
+        <main class="chat-main" id="chatMain">
 
             <header class="topbar">
-                <div>
-                    <p class="eyebrow">YOUR PERSONAL CHESS ASSISTANT</p>
-                    <h2>Chess Knowledge</h2>
+                <div class="topbar-left">
+                    <button id="sidebarToggleBtn" class="sidebar-toggle-btn" aria-label="Toggle topics">
+                        ☰
+                    </button>
+                    <div>
+                        <p class="eyebrow">YOUR PERSONAL CHESS ASSISTANT</p>
+                        <h2>Chess Knowledge</h2>
+                    </div>
                 </div>
 
                 <div class="model-badge">
@@ -130,7 +162,7 @@
 
                     <p class="welcome-description">
                         Your personal chess knowledge assistant.
-                        Explore tactics, understand strategies,
+                        Explore tactics, understand strategies, analyze your board positions,
                         and sharpen your understanding of the game.
                     </p>
 
@@ -173,7 +205,7 @@
                 <form id="chatForm" class="composer">
                     <textarea
                         id="questionInput"
-                        placeholder="Ask anything about chess..."
+                        placeholder="Ask anything about chess, rules, or current position..."
                         rows="1"
                         maxlength="2000"
                         required
@@ -191,6 +223,9 @@
 
         </main>
     </div>
+
+    <!-- Notification Toast -->
+    <div id="toast" class="toast" role="alert" aria-live="polite"></div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
     <script src="script.js"></script>

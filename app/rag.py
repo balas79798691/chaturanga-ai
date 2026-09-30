@@ -29,6 +29,21 @@ QDRANT_PATH = str(BASE_DIR / "qdrant_storage")
 print("Loading embedding model...")
 embedding_model = SentenceTransformer(MODEL_NAME)
 
+
+def ensure_collection_exists():
+    """Ensure the Qdrant collection exists; if missing (e.g. on fresh deployment), ingest it automatically."""
+    temp_client = QdrantClient(path=QDRANT_PATH)
+    exists = temp_client.collection_exists(COLLECTION_NAME)
+    temp_client.close()
+
+    if not exists:
+        print(f"Collection '{COLLECTION_NAME}' not found in Qdrant. Running initial ingestion...")
+        from app.ingest import ingest_documents
+        ingest_documents()
+
+
+ensure_collection_exists()
+
 print("Connecting to Qdrant...")
 qdrant_client = QdrantClient(path=QDRANT_PATH)
 
