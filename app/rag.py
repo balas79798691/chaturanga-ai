@@ -4,7 +4,6 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 from google import genai
-from sentence_transformers import SentenceTransformer
 from qdrant_client import QdrantClient
 
 # --------------------------------------------------
@@ -15,19 +14,24 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 load_dotenv(BASE_DIR / ".env")
 
-MODEL_NAME = "all-MiniLM-L6-v2"
-COLLECTION_NAME = "chess_knowledge_v4"
-SIMILARITY_THRESHOLD = 0.4
+EMBEDDING_MODEL_NAME = "gemini-embedding-001"
+COLLECTION_NAME = "chess_knowledge_gemini_v1"
+VECTOR_SIZE = 768
+SIMILARITY_THRESHOLD = 0.35
 TOP_K = 3
 
 QDRANT_PATH = str(BASE_DIR / "qdrant_storage")
 
 # --------------------------------------------------
-# 2. Load models and database once
+# 2. Gemini client and vector database setup
 # --------------------------------------------------
 
-print("Loading embedding model...")
-embedding_model = SentenceTransformer(MODEL_NAME)
+def get_gemini_client():
+    """Retrieve Gemini client using the environment API key."""
+    api_key = os.getenv("GEMINI_API_KEY")
+    if not api_key:
+        raise ValueError("GEMINI_API_KEY is missing from your .env file or environment.")
+    return genai.Client(api_key=api_key)
 
 
 def ensure_collection_exists():
@@ -53,9 +57,15 @@ qdrant_client = QdrantClient(path=QDRANT_PATH)
 
 
 def search_qdrant(question, top_k=TOP_K):
-    """Search Qdrant and print similarity scores."""
+    """Search Qdrant using Gemini embeddings and print similarity scores."""
 
-    query_embedding = embedding_model.encode(question).tolist()
+    client = get_gemini_client()
+    embed_response = client.models.embed_content(
+        model=EMBEDDING_MODEL_NAME,
+        contents=question,
+        config={"output_dimensionality": VECTOR_SIZE},
+    )
+    query_embedding = embed_response.embeddings[0].values
 
     results = qdrant_client.query_points(
         collection_name=COLLECTION_NAME,
@@ -90,12 +100,7 @@ def rewrite_query(question, history=""):
     if not history:
         return question
 
-    api_key = os.getenv("GEMINI_API_KEY")
-
-    if not api_key:
-        raise ValueError("GEMINI_API_KEY is missing from your .env file.")
-
-    client = genai.Client(api_key=api_key)
+    client = get_gemini_client()
 
     prompt = f"""
 You are a query rewriting assistant for a chess knowledge chatbot.
@@ -138,14 +143,7 @@ REWRITTEN SEARCH QUERY:
 def generate_answer(question, context, history=""):
     """Generate an answer using retrieved context and conversation history."""
 
-    api_key = os.getenv("GEMINI_API_KEY")
-
-    if not api_key:
-        raise ValueError(
-            "GEMINI_API_KEY is missing from your .env file."
-        )
-
-    client = genai.Client(api_key=api_key)
+    client = get_gemini_client()
 
     prompt = f"""
 You are a helpful chess knowledge assistant.

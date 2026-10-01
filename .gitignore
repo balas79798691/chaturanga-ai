@@ -11,8 +11,8 @@ venv/
 __pycache__/
 *.py[cod]
 
-# Local Qdrant database
-qdrant_storage/
+# Local Qdrant database (committed pre-computed 2.6MB vectors for instant, quota-safe deployment)
+# qdrant_storage/
 
 # SQLite databases
 *.db
