@@ -35,13 +35,20 @@ def get_gemini_client():
 
 
 def ensure_collection_exists():
-    """Ensure the Qdrant collection exists; if missing (e.g. on fresh deployment), ingest it automatically."""
+    """Ensure the Qdrant collection exists and has points; if missing or empty, ingest it automatically."""
     temp_client = QdrantClient(path=QDRANT_PATH)
     exists = temp_client.collection_exists(COLLECTION_NAME)
+    has_points = False
+    if exists:
+        try:
+            info = temp_client.get_collection(COLLECTION_NAME)
+            has_points = (info.points_count or 0) > 0
+        except Exception:
+            has_points = False
     temp_client.close()
 
-    if not exists:
-        print(f"Collection '{COLLECTION_NAME}' not found in Qdrant. Running initial ingestion...")
+    if not exists or not has_points:
+        print(f"Collection '{COLLECTION_NAME}' not found or empty in Qdrant. Running initial ingestion...")
         from app.ingest import ingest_documents
         ingest_documents()
 
@@ -91,13 +98,14 @@ def search_qdrant(question, top_k=TOP_K):
 
     return filtered_results
 # --------------------------------------------------
-# 4. Rewrite follow-up questions
+# 4. Rewrite follow-up questions & positions
 # --------------------------------------------------
 
 def rewrite_query(question, history=""):
-    """Rewrite a follow-up question into a standalone search query."""
+    """Rewrite a follow-up question or chess position into a standalone search query."""
 
-    if not history:
+    is_position_query = "fen:" in question.lower() or "moves played:" in question.lower()
+    if not history and not is_position_query:
         return question
 
     client = get_gemini_client()
@@ -105,14 +113,12 @@ def rewrite_query(question, history=""):
     prompt = f"""
 You are a query rewriting assistant for a chess knowledge chatbot.
 
-Your task is to rewrite the current question into a standalone
-search query that can be used to retrieve relevant chess knowledge.
+Your task is to convert the user's question into an effective semantic search query for a chess knowledge base.
 
 RULES:
-- Use the conversation history to understand references such as
-  "it", "that", "why", and "give me an example".
+- If conversation history is provided, resolve references such as "it", "that", "why", and "give me an example".
+- If the question contains a chess position, moves, or FEN notation (e.g. "Moves played: 1. e4", "Black to move"), extract the core chess opening, key moves, and strategic concepts (e.g. "1. e4 opening principles strategic plans and black responses").
 - Preserve the original meaning and intent.
-- If the question is already standalone, keep it unchanged.
 - Do not answer the question.
 - Return ONLY the rewritten search query.
 - Do not add explanations or quotation marks.
@@ -136,28 +142,53 @@ REWRITTEN SEARCH QUERY:
     return rewritten or question
 
 # --------------------------------------------------
-# 4. Generate answer using Gemini
+# 5. Generate answer using Gemini
 # --------------------------------------------------
 
 
 def generate_answer(question, context, history=""):
-    """Generate an answer using retrieved context and conversation history."""
+    """Generate an answer using retrieved context, position analysis, and conversation history."""
 
     client = get_gemini_client()
 
-    prompt = f"""
-You are a helpful chess knowledge assistant.
+    is_position_query = "fen:" in question.lower() or "moves played:" in question.lower()
+
+    if is_position_query:
+        prompt = f"""
+You are Chaturanga AI, an insightful grandmaster-level chess assistant.
+
+The user is asking for analysis of their current chessboard position.
+
+Use the retrieved chess knowledge below to ground your explanation in sound principles and opening theory.
+Also analyze the specific board position (FEN, move history, turn) directly using your deep chess understanding.
+
+CONVERSATION HISTORY:
+{history}
+
+RETRIEVED KNOWLEDGE CONTEXT:
+{context}
+
+CURRENT CHESS POSITION & QUESTION:
+{question}
+
+INSTRUCTIONS:
+- Break down the strategic ideas for both sides (center control, piece activity, king safety).
+- Recommend 2-3 of the best candidate moves for the side to move with clear strategic reasoning.
+- Format your response cleanly with markdown headings and bullet points.
+- Be encouraging and educational.
+
+ANSWER:
+"""
+    else:
+        prompt = f"""
+You are Chaturanga AI, a helpful chess knowledge assistant.
 
 Use the conversation history to understand follow-up questions
 and references such as "it", "that move", or "when can I do it".
 
-Answer using ONLY the information provided in the retrieved
-context below.
-
-If the answer cannot be found in the context,
-say that the information is not available in the knowledge base.
-
-Do not invent or assume information.
+Answer using the retrieved chess knowledge context below.
+If the question is about chess and can be explained using standard chess principles, provide a clear, accurate explanation.
+If the question is completely unrelated to chess or impossible to answer, state that the information is not available in the knowledge base.
 
 CONVERSATION HISTORY:
 {history}
