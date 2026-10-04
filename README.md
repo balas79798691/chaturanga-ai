@@ -1,3 +1,4 @@
+link to this - https://chaturanga-ai-1.onrender.com
 # ♟️ Chaturanga AI
 
 **Chaturanga AI** is an intelligent, full-stack Chess Assistant featuring a **Retrieval-Augmented Generation (RAG)** pipeline powered by **Google Gemini**, **Qdrant**, and **FastAPI**, paired with an **Interactive Chessboard** and persistent conversation history.
