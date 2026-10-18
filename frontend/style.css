@@ -976,6 +976,95 @@ button {
     font-style: italic;
 }
 
+/* Assistant Message Action Bar (Text-to-Speech & Copy) */
+.message-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 8px;
+    padding-left: 2px;
+}
+
+.message-action-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 11px;
+    border-radius: 8px;
+    background: rgba(20, 28, 21, 0.75);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.2px;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    user-select: none;
+}
+
+.message-action-btn:hover {
+    color: var(--gold-light);
+    border-color: var(--gold-dark);
+    background: var(--panel-hover);
+    transform: translateY(-1px);
+}
+
+.message-action-btn svg {
+    flex-shrink: 0;
+}
+
+.message-action-btn.tts-btn.playing {
+    background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dark) 100%);
+    border-color: var(--gold-light);
+    color: #121913;
+    font-weight: 600;
+    box-shadow: 0 0 12px rgba(217, 185, 120, 0.4);
+}
+
+.message-action-btn.tts-btn.playing:hover {
+    filter: brightness(1.08);
+}
+
+.message-action-btn.tts-btn .tts-icon-stop {
+    display: none;
+}
+
+.message-action-btn.tts-btn.playing .tts-icon-default {
+    display: none;
+}
+
+.message-action-btn.tts-btn.playing .tts-icon-stop {
+    display: inline-block;
+}
+
+.tts-wave {
+    display: none;
+    align-items: center;
+    gap: 2px;
+    height: 12px;
+}
+
+.message-action-btn.tts-btn.playing .tts-wave {
+    display: inline-flex;
+}
+
+.tts-wave span {
+    display: inline-block;
+    width: 2px;
+    background: #121913;
+    border-radius: 1px;
+    animation: soundWaveBounce 0.8s ease-in-out infinite alternate;
+}
+
+.tts-wave span:nth-child(1) { height: 4px; animation-delay: 0s; }
+.tts-wave span:nth-child(2) { height: 11px; animation-delay: 0.25s; }
+.tts-wave span:nth-child(3) { height: 7px; animation-delay: 0.5s; }
+
+@keyframes soundWaveBounce {
+    0% { height: 3px; }
+    100% { height: 12px; }
+}
+
 /* Composer Area (Fixed Bottom) */
 .composer-area {
     width: 100%;
@@ -983,6 +1072,94 @@ button {
     max-width: 860px;
     margin: 0 auto;
     padding: 8px 28px 18px;
+}
+
+/* Speech-to-Text Listening Banner */
+.speech-banner {
+    display: none;
+    align-items: center;
+    justify-content: space-between;
+    background: linear-gradient(90deg, rgba(64, 24, 21, 0.9) 0%, rgba(32, 20, 20, 0.95) 100%);
+    border: 1px solid rgba(224, 82, 68, 0.45);
+    border-radius: 10px;
+    padding: 8px 14px;
+    margin-bottom: 8px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+    animation: speechBannerSlide 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.speech-banner.active {
+    display: flex;
+}
+
+.speech-banner-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.speech-pulse-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #ff5242;
+    box-shadow: 0 0 10px #ff5242;
+    animation: speechPulseDot 1.2s infinite alternate;
+}
+
+.speech-wave-mini {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    height: 14px;
+}
+
+.speech-wave-mini span {
+    width: 2px;
+    background: #ff7b6e;
+    border-radius: 1px;
+    animation: speechWaveBounce 0.8s ease-in-out infinite alternate;
+}
+
+.speech-wave-mini span:nth-child(1) { height: 6px; animation-delay: 0s; }
+.speech-wave-mini span:nth-child(2) { height: 13px; animation-delay: 0.2s; }
+.speech-wave-mini span:nth-child(3) { height: 8px; animation-delay: 0.4s; }
+.speech-wave-mini span:nth-child(4) { height: 14px; animation-delay: 0.1s; }
+
+.speech-banner-text {
+    font-size: 12px;
+    font-weight: 500;
+    color: #ffc9c4;
+}
+
+.speech-banner-stop {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.12);
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    transition: all 0.15s ease;
+}
+
+.speech-banner-stop:hover {
+    background: rgba(255, 255, 255, 0.22);
+}
+
+@keyframes speechPulseDot {
+    0% { transform: scale(0.9); opacity: 0.6; }
+    100% { transform: scale(1.15); opacity: 1; }
+}
+
+@keyframes speechWaveBounce {
+    0% { transform: scaleY(0.3); }
+    100% { transform: scaleY(1); }
+}
+
+@keyframes speechBannerSlide {
+    0% { opacity: 0; transform: translateY(-6px); }
+    100% { opacity: 1; transform: translateY(0); }
 }
 
 .composer {
@@ -1018,7 +1195,14 @@ button {
     color: #798877;
 }
 
-.composer button {
+.composer-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.composer .send-btn {
     width: 38px;
     height: 38px;
     flex-shrink: 0;
@@ -1029,16 +1213,76 @@ button {
     font-weight: 700;
     display: grid;
     place-items: center;
-    transition: transform 0.15s, opacity 0.15s;
+    transition: transform 0.15s, opacity 0.15s, box-shadow 0.15s;
 }
 
-.composer button:hover:not(:disabled) {
+.composer .send-btn:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(217, 185, 120, 0.25);
+}
+
+.composer .send-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+/* Mic Button (Speech-to-Text) */
+.composer .mic-btn {
+    position: relative;
+    width: 38px;
+    height: 38px;
+    flex-shrink: 0;
+    border-radius: 10px;
+    background: var(--panel-hover);
+    border: 1px solid var(--border-light);
+    color: var(--muted);
+    display: grid;
+    place-items: center;
+    transition: all 0.2s ease;
+}
+
+.composer .mic-btn:hover {
+    color: var(--gold-light);
+    border-color: var(--gold);
+    background: var(--panel-active);
     transform: translateY(-1px);
 }
 
-.composer button:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
+.composer .mic-btn.recording {
+    background: #471a17;
+    border-color: #e05244;
+    color: #ff6b5b;
+    box-shadow: 0 0 14px rgba(224, 82, 68, 0.4);
+    animation: micActivePulse 1.8s infinite;
+}
+
+.composer .mic-btn.recording .mic-ring {
+    position: absolute;
+    inset: -3px;
+    border-radius: 13px;
+    border: 2px solid rgba(224, 82, 68, 0.6);
+    animation: micRingExpand 1.5s cubic-bezier(0.2, 0.8, 0.2, 1) infinite;
+    pointer-events: none;
+}
+
+@keyframes micActivePulse {
+    0%, 100% {
+        box-shadow: 0 0 10px rgba(224, 82, 68, 0.3);
+    }
+    50% {
+        box-shadow: 0 0 20px rgba(224, 82, 68, 0.65);
+    }
+}
+
+@keyframes micRingExpand {
+    0% {
+        transform: scale(0.95);
+        opacity: 0.9;
+    }
+    100% {
+        transform: scale(1.35);
+        opacity: 0;
+    }
 }
 
 .composer-note {

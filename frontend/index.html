@@ -202,6 +202,20 @@
             </section>
 
             <footer class="composer-area">
+                <!-- Live Speech Listening Banner -->
+                <div id="speechBanner" class="speech-banner" aria-live="polite">
+                    <div class="speech-banner-left">
+                        <span class="speech-pulse-dot"></span>
+                        <div class="speech-wave-mini">
+                            <span></span><span></span><span></span><span></span>
+                        </div>
+                        <span class="speech-banner-text">Listening... Speak now</span>
+                    </div>
+                    <button type="button" id="stopSpeechBannerBtn" class="speech-banner-stop">
+                        Stop
+                    </button>
+                </div>
+
                 <form id="chatForm" class="composer">
                     <textarea
                         id="questionInput"
@@ -211,9 +225,26 @@
                         required
                     ></textarea>
 
-                    <button type="submit" id="sendBtn" aria-label="Send message">
-                        ↑
-                    </button>
+                    <div class="composer-actions">
+                        <button
+                            type="button"
+                            id="micBtn"
+                            class="mic-btn"
+                            aria-label="Turn on microphone to speak"
+                            title="Turn on speech to text"
+                        >
+                            <svg class="mic-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path>
+                                <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                                <line x1="12" y1="19" x2="12" y2="22"></line>
+                            </svg>
+                            <span class="mic-ring"></span>
+                        </button>
+
+                        <button type="submit" id="sendBtn" class="send-btn" aria-label="Send message" title="Send message">
+                            ↑
+                        </button>
+                    </div>
                 </form>
 
                 <p class="composer-note">

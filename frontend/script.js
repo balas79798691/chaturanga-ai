@@ -20,6 +20,11 @@ const newChatBtn = document.getElementById("newChatBtn");
 const toastEl = document.getElementById("toast");
 const sessionsList = document.getElementById("sessionsList");
 
+// Voice & Speech (STT & TTS) elements
+const micBtn = document.getElementById("micBtn");
+const speechBanner = document.getElementById("speechBanner");
+const stopSpeechBannerBtn = document.getElementById("stopSpeechBannerBtn");
+
 // Chessboard elements
 const chessboard = document.getElementById("chessboard");
 const resetBoardBtn = document.getElementById("resetBoardBtn");
@@ -202,6 +207,311 @@ async function loadSessionsList() {
     }
 }
 
+// --------------------------------------------------
+// Voice Services: Speech-to-Text & Text-to-Speech
+// --------------------------------------------------
+
+// Text-to-Speech (TTS) Engine
+let activeTtsBtn = null;
+let activeUtteranceChunks = [];
+let activeChunkIndex = 0;
+let isSpeakingResponse = false;
+
+function cleanMarkdownForSpeech(markdown) {
+    if (!markdown) return "";
+    let text = markdown;
+
+    // Remove code blocks
+    text = text.replace(/```[\s\S]*?```/g, " ");
+    // Remove inline code
+    text = text.replace(/`([^`]+)`/g, "$1");
+    // Remove markdown image syntax
+    text = text.replace(/!\[(.*?)\]\(.*?\)/g, "$1");
+    // Remove markdown links, keep anchor text
+    text = text.replace(/\[(.*?)\]\(.*?\)/g, "$1");
+    // Remove markdown headings
+    text = text.replace(/^#{1,6}\s+/gm, "");
+    // Remove blockquotes
+    text = text.replace(/^\s*>\s+/gm, "");
+    // Remove bold and italics
+    text = text.replace(/[*_]{1,3}([^*_]+)[*_]{1,3}/g, "$1");
+    // Remove strikethrough
+    text = text.replace(/~~(.*?)~~/g, "$1");
+    // Clean list markers
+    text = text.replace(/^\s*[-*+]\s+/gm, "");
+    text = text.replace(/^\s*\d+\.\s+/gm, "");
+    // Remove horizontal rules
+    text = text.replace(/^(?:[-*_]\s*){3,}$/gm, "");
+    // Remove decorative chess symbols
+    text = text.replace(/[♟♞♝♜♛♚♙♘♗♖♕♔]/g, "");
+    // Standardize spacing and pauses
+    text = text.replace(/\n+/g, ". ");
+    text = text.replace(/\s+/g, " ");
+    text = text.replace(/\.\s*\./g, ".");
+    return text.trim();
+}
+
+function splitTextIntoSentences(text) {
+    if (!text) return [];
+    const matches = text.match(/[^.!?]+[.!?]+|[^.!?]+$/g);
+    if (!matches) return [text];
+
+    const chunks = [];
+    for (let sentence of matches) {
+        sentence = sentence.trim();
+        if (!sentence) continue;
+        if (sentence.length <= 180) {
+            chunks.push(sentence);
+        } else {
+            const subparts = sentence.match(/[^,;]+[,;]+|[^,;]+$/g) || [sentence];
+            let buf = "";
+            for (const part of subparts) {
+                if ((buf + " " + part).trim().length <= 180) {
+                    buf = (buf + " " + part).trim();
+                } else {
+                    if (buf) chunks.push(buf);
+                    buf = part.trim();
+                }
+            }
+            if (buf) chunks.push(buf);
+        }
+    }
+    return chunks.length > 0 ? chunks : [text];
+}
+
+function stopTextToSpeech() {
+    if (typeof window !== "undefined" && "speechSynthesis" in window) {
+        window.speechSynthesis.cancel();
+    }
+    if (activeTtsBtn) {
+        activeTtsBtn.classList.remove("playing");
+        const label = activeTtsBtn.querySelector(".tts-label");
+        if (label) label.textContent = "Listen";
+        activeTtsBtn.setAttribute("aria-label", "Listen to response");
+        activeTtsBtn.setAttribute("title", "Listen to response");
+        activeTtsBtn = null;
+    }
+    isSpeakingResponse = false;
+    activeUtteranceChunks = [];
+    activeChunkIndex = 0;
+}
+
+function speakNextChunk() {
+    if (!isSpeakingResponse || activeChunkIndex >= activeUtteranceChunks.length) {
+        stopTextToSpeech();
+        return;
+    }
+
+    const chunk = activeUtteranceChunks[activeChunkIndex];
+    const utterance = new SpeechSynthesisUtterance(chunk);
+    utterance.lang = "en-US";
+    utterance.rate = 1.0;
+    utterance.pitch = 1.0;
+
+    const voices = window.speechSynthesis.getVoices();
+    if (voices && voices.length > 0) {
+        const preferredVoice = voices.find(v => 
+            (v.name.includes("Google") || v.name.includes("Natural") || v.name.includes("Samantha") || v.name.includes("Daniel") || v.name.includes("Premium") || v.name.includes("Karen")) && v.lang.startsWith("en")
+        ) || voices.find(v => v.lang.startsWith("en"));
+        if (preferredVoice) {
+            utterance.voice = preferredVoice;
+        }
+    }
+
+    utterance.onend = () => {
+        if (!isSpeakingResponse) return;
+        activeChunkIndex++;
+        if (activeChunkIndex < activeUtteranceChunks.length) {
+            speakNextChunk();
+        } else {
+            stopTextToSpeech();
+        }
+    };
+
+    utterance.onerror = (e) => {
+        if (e.error !== "interrupted" && e.error !== "canceled") {
+            console.warn("Speech synthesis error:", e);
+        }
+        stopTextToSpeech();
+    };
+
+    window.speechSynthesis.speak(utterance);
+}
+
+function toggleTextToSpeech(rawText, btn) {
+    if (!("speechSynthesis" in window) || typeof SpeechSynthesisUtterance === "undefined") {
+        showToast("Text-to-speech audio is not supported in this browser.", "danger");
+        return;
+    }
+
+    if (isSpeakingResponse && activeTtsBtn === btn) {
+        stopTextToSpeech();
+        showToast("Audio playback stopped");
+        return;
+    }
+
+    stopTextToSpeech();
+
+    if (isRecognizingSpeech) {
+        stopSpeechRecognition();
+    }
+
+    const cleanText = cleanMarkdownForSpeech(rawText);
+    if (!cleanText) {
+        showToast("No readable text found for audio playback.", "info");
+        return;
+    }
+
+    activeUtteranceChunks = splitTextIntoSentences(cleanText);
+    if (activeUtteranceChunks.length === 0) return;
+
+    activeChunkIndex = 0;
+    isSpeakingResponse = true;
+    activeTtsBtn = btn;
+
+    btn.classList.add("playing");
+    const label = btn.querySelector(".tts-label");
+    if (label) label.textContent = "Stop";
+    btn.setAttribute("aria-label", "Stop audio playback");
+    btn.setAttribute("title", "Click to stop audio playback");
+
+    window.speechSynthesis.cancel();
+    speakNextChunk();
+}
+
+if (typeof window !== "undefined" && "speechSynthesis" in window) {
+    window.speechSynthesis.onvoiceschanged = () => {
+        window.speechSynthesis.getVoices();
+    };
+}
+
+// Speech-to-Text (STT) Engine
+const SpeechRecognitionClass = window.SpeechRecognition || window.webkitSpeechRecognition;
+let speechRecognizer = null;
+let isRecognizingSpeech = false;
+let speechBaseText = "";
+
+function stopSpeechRecognition() {
+    if (speechRecognizer) {
+        try {
+            speechRecognizer.stop();
+        } catch (e) {
+            // Ignored if already stopped
+        }
+    }
+    isRecognizingSpeech = false;
+    if (micBtn) {
+        micBtn.classList.remove("recording");
+        micBtn.setAttribute("aria-pressed", "false");
+        micBtn.setAttribute("title", "Turn on microphone to speak");
+    }
+    if (speechBanner) {
+        speechBanner.classList.remove("active");
+    }
+    if (questionInput) {
+        questionInput.placeholder = "Ask anything about chess, rules, or current position...";
+    }
+}
+
+function startSpeechRecognition() {
+    if (!SpeechRecognitionClass) {
+        showToast("Speech recognition is not supported in this browser. Please try Chrome, Edge, or Safari.", "danger");
+        return;
+    }
+
+    if (isSpeakingResponse) {
+        stopTextToSpeech();
+    }
+
+    try {
+        if (!speechRecognizer) {
+            speechRecognizer = new SpeechRecognitionClass();
+            speechRecognizer.continuous = true;
+            speechRecognizer.interimResults = true;
+            speechRecognizer.lang = "en-US";
+
+            speechRecognizer.onstart = () => {
+                isRecognizingSpeech = true;
+                if (micBtn) {
+                    micBtn.classList.add("recording");
+                    micBtn.setAttribute("aria-pressed", "true");
+                    micBtn.setAttribute("title", "Click to stop voice recording");
+                }
+                if (speechBanner) {
+                    speechBanner.classList.add("active");
+                }
+                if (questionInput) {
+                    questionInput.placeholder = "🎙️ Listening... Speak your query now...";
+                }
+                showToast("Microphone active. Speak your question...", "info");
+            };
+
+            speechRecognizer.onresult = (event) => {
+                let interimTranscript = "";
+                let finalTranscript = "";
+
+                for (let i = 0; i < event.results.length; ++i) {
+                    const transcriptPart = event.results[i][0].transcript;
+                    if (event.results[i].isFinal) {
+                        finalTranscript += transcriptPart + " ";
+                    } else {
+                        interimTranscript += transcriptPart;
+                    }
+                }
+
+                const fullSpoken = (finalTranscript + interimTranscript).trim();
+                let combinedText = speechBaseText;
+                if (combinedText && !combinedText.endsWith(" ")) {
+                    combinedText += " ";
+                }
+                combinedText += fullSpoken;
+
+                questionInput.value = combinedText;
+                questionInput.style.height = "auto";
+                questionInput.style.height = Math.min(questionInput.scrollHeight, 140) + "px";
+            };
+
+            speechRecognizer.onerror = (event) => {
+                console.warn("Speech recognition error:", event.error);
+                if (event.error === "not-allowed" || event.error === "service-not-allowed") {
+                    showToast("Microphone permission denied. Please allow microphone access in your browser.", "danger");
+                } else if (event.error === "audio-capture") {
+                    showToast("No microphone was detected. Please check your audio input settings.", "danger");
+                } else if (event.error === "network") {
+                    showToast("Network error occurred during speech recognition.", "danger");
+                }
+                stopSpeechRecognition();
+            };
+
+            speechRecognizer.onend = () => {
+                stopSpeechRecognition();
+            };
+        }
+
+        speechBaseText = questionInput.value.trim();
+        speechRecognizer.start();
+
+    } catch (err) {
+        console.error("Failed to start speech recognition:", err);
+        stopSpeechRecognition();
+    }
+}
+
+function toggleSpeechRecognition() {
+    if (isRecognizingSpeech) {
+        stopSpeechRecognition();
+        showToast("Voice input stopped");
+    } else {
+        startSpeechRecognition();
+    }
+}
+
+micBtn?.addEventListener("click", toggleSpeechRecognition);
+stopSpeechBannerBtn?.addEventListener("click", () => {
+    stopSpeechRecognition();
+    showToast("Voice input stopped");
+});
+
 async function switchToSession(targetSessionId) {
     if (isLoading) return;
     if (targetSessionId === sessionId) {
@@ -209,6 +519,9 @@ async function switchToSession(targetSessionId) {
         sidebar?.classList.remove("open");
         return;
     }
+
+    stopTextToSpeech();
+    stopSpeechRecognition();
 
     sessionId = targetSessionId;
     localStorage.setItem(SESSION_STORAGE_KEY, sessionId);
@@ -243,6 +556,9 @@ async function deleteSession(targetSessionId) {
 
 function startNewConversation() {
     if (isLoading) return;
+
+    stopTextToSpeech();
+    stopSpeechRecognition();
 
     sessionId = crypto.randomUUID();
     localStorage.setItem(SESSION_STORAGE_KEY, sessionId);
@@ -293,6 +609,70 @@ function addMessage(text, sender, isError = false) {
 
     content.appendChild(label);
     content.appendChild(bubble);
+
+    // Assistant response action bar: Text-to-Speech (Speaker) & Copy
+    if (sender === "assistant" && !isError) {
+        const actionsBar = document.createElement("div");
+        actionsBar.className = "message-actions";
+
+        // TTS Speaker button
+        const ttsBtn = document.createElement("button");
+        ttsBtn.type = "button";
+        ttsBtn.className = "message-action-btn tts-btn";
+        ttsBtn.setAttribute("title", "Listen to response");
+        ttsBtn.setAttribute("aria-label", "Listen to response");
+
+        ttsBtn.innerHTML = `
+            <svg class="tts-icon-default" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+            </svg>
+            <svg class="tts-icon-stop" viewBox="0 0 24 24" width="13" height="13" fill="currentColor">
+                <rect x="6" y="6" width="12" height="12" rx="2"></rect>
+            </svg>
+            <span class="tts-label">Listen</span>
+            <div class="tts-wave">
+                <span></span><span></span><span></span>
+            </div>
+        `;
+
+        ttsBtn.addEventListener("click", () => {
+            toggleTextToSpeech(text, ttsBtn);
+        });
+
+        // Copy button
+        const copyBtn = document.createElement("button");
+        copyBtn.type = "button";
+        copyBtn.className = "message-action-btn copy-btn";
+        copyBtn.setAttribute("title", "Copy response");
+        copyBtn.setAttribute("aria-label", "Copy response");
+
+        copyBtn.innerHTML = `
+            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+            </svg>
+            <span class="copy-label">Copy</span>
+        `;
+
+        copyBtn.addEventListener("click", async () => {
+            try {
+                await navigator.clipboard.writeText(text);
+                const copyLabel = copyBtn.querySelector(".copy-label");
+                if (copyLabel) copyLabel.textContent = "Copied!";
+                setTimeout(() => {
+                    if (copyLabel) copyLabel.textContent = "Copy";
+                }, 1600);
+            } catch (err) {
+                console.error("Copy failed", err);
+            }
+        });
+
+        actionsBar.appendChild(ttsBtn);
+        actionsBar.appendChild(copyBtn);
+        content.appendChild(actionsBar);
+    }
 
     message.appendChild(avatar);
     message.appendChild(content);
@@ -379,6 +759,11 @@ async function sendQuestion(question) {
         return;
     }
 
+    if (isRecognizingSpeech) {
+        stopSpeechRecognition();
+    }
+    stopTextToSpeech();
+
     if (welcomeScreen) welcomeScreen.style.display = "none";
 
     addMessage(question, "user");
@@ -456,6 +841,9 @@ questionInput.addEventListener("keydown", function (event) {
 questionInput.addEventListener("input", function () {
     questionInput.style.height = "auto";
     questionInput.style.height = Math.min(questionInput.scrollHeight, 140) + "px";
+    if (isRecognizingSpeech) {
+        speechBaseText = questionInput.value.trim();
+    }
 });
 
 // Sidebar & suggestion buttons
