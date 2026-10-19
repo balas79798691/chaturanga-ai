@@ -1,12 +1,14 @@
 
+import base64
 import sqlite3
 from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from google import genai
 from pydantic import BaseModel
 
-from app.rag import ask_question
+from app.rag import ask_question, get_gemini_client
 
 # --------------------------------------------------
 # 1. Configuration
@@ -71,6 +73,11 @@ class QuestionRequest(BaseModel):
     question: str
     session_id: str
 
+
+class TranscribeRequest(BaseModel):
+    audio_base64: str
+    mime_type: str = "audio/webm"
+
 # --------------------------------------------------
 # 4. Routes
 # --------------------------------------------------
@@ -78,6 +85,37 @@ class QuestionRequest(BaseModel):
 @app.get("/api/health")
 def health():
     return {"status": "ok", "message": "Chess RAG Chatbot API is running!"}
+
+
+@app.post("/api/transcribe")
+def transcribe(request: TranscribeRequest):
+    """Fallback audio transcription endpoint using Gemini Flash when client speech recognition is unsupported or fails."""
+    try:
+        raw_b64 = request.audio_base64
+        if "," in raw_b64:
+            raw_b64 = raw_b64.split(",", 1)[1]
+
+        audio_bytes = base64.b64decode(raw_b64)
+        if not audio_bytes:
+            return {"text": "", "error": "Empty audio data received."}
+
+        client = get_gemini_client()
+        mime = request.mime_type.split(";")[0].strip() or "audio/webm"
+
+        response = client.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=[
+                genai.types.Part.from_bytes(data=audio_bytes, mime_type=mime),
+                "Transcribe this spoken chess question or query into text accurately. Output only the plain transcription text, nothing else. If there is no speech, output nothing."
+            ],
+        )
+
+        transcript = (response.text or "").strip()
+        return {"text": transcript}
+
+    except Exception as e:
+        print(f"Transcription error: {e}")
+        return {"text": "", "error": str(e)}
 
 
 @app.post("/ask")

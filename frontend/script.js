@@ -211,11 +211,29 @@ async function loadSessionsList() {
 // Voice Services: Speech-to-Text & Text-to-Speech
 // --------------------------------------------------
 
-// Text-to-Speech (TTS) Engine
+// ==================================================
+// 1. Text-to-Speech (TTS) Engine
+// ==================================================
+
 let activeTtsBtn = null;
-let activeUtteranceChunks = [];
-let activeChunkIndex = 0;
 let isSpeakingResponse = false;
+let ttsHeartbeatInterval = null;
+let availableVoices = [];
+
+function loadVoices() {
+    if (typeof window !== "undefined" && "speechSynthesis" in window) {
+        try {
+            availableVoices = window.speechSynthesis.getVoices() || [];
+        } catch (e) {
+            availableVoices = [];
+        }
+    }
+}
+
+loadVoices();
+if (typeof window !== "undefined" && "speechSynthesis" in window) {
+    window.speechSynthesis.onvoiceschanged = loadVoices;
+}
 
 function cleanMarkdownForSpeech(markdown) {
     if (!markdown) return "";
@@ -225,11 +243,11 @@ function cleanMarkdownForSpeech(markdown) {
     text = text.replace(/```[\s\S]*?```/g, " ");
     // Remove inline code
     text = text.replace(/`([^`]+)`/g, "$1");
-    // Remove markdown image syntax
+    // Remove image syntax
     text = text.replace(/!\[(.*?)\]\(.*?\)/g, "$1");
-    // Remove markdown links, keep anchor text
+    // Remove links, keep text
     text = text.replace(/\[(.*?)\]\(.*?\)/g, "$1");
-    // Remove markdown headings
+    // Remove headings
     text = text.replace(/^#{1,6}\s+/gm, "");
     // Remove blockquotes
     text = text.replace(/^\s*>\s+/gm, "");
@@ -237,52 +255,33 @@ function cleanMarkdownForSpeech(markdown) {
     text = text.replace(/[*_]{1,3}([^*_]+)[*_]{1,3}/g, "$1");
     // Remove strikethrough
     text = text.replace(/~~(.*?)~~/g, "$1");
+    // Clean chess move notation: e.g. "1. e4 e5 2. Nf3" -> "e4 e5, Nf3" so it doesn't pause on "1."
+    text = text.replace(/\b\d+\.\s+/g, "");
     // Clean list markers
     text = text.replace(/^\s*[-*+]\s+/gm, "");
-    text = text.replace(/^\s*\d+\.\s+/gm, "");
     // Remove horizontal rules
     text = text.replace(/^(?:[-*_]\s*){3,}$/gm, "");
-    // Remove decorative chess symbols
+    // Remove chess piece symbols
     text = text.replace(/[♟♞♝♜♛♚♙♘♗♖♕♔]/g, "");
     // Standardize spacing and pauses
     text = text.replace(/\n+/g, ". ");
     text = text.replace(/\s+/g, " ");
-    text = text.replace(/\.\s*\./g, ".");
+    text = text.replace(/(\.\s*)+/g, ". ");
     return text.trim();
 }
 
-function splitTextIntoSentences(text) {
-    if (!text) return [];
-    const matches = text.match(/[^.!?]+[.!?]+|[^.!?]+$/g);
-    if (!matches) return [text];
-
-    const chunks = [];
-    for (let sentence of matches) {
-        sentence = sentence.trim();
-        if (!sentence) continue;
-        if (sentence.length <= 180) {
-            chunks.push(sentence);
-        } else {
-            const subparts = sentence.match(/[^,;]+[,;]+|[^,;]+$/g) || [sentence];
-            let buf = "";
-            for (const part of subparts) {
-                if ((buf + " " + part).trim().length <= 180) {
-                    buf = (buf + " " + part).trim();
-                } else {
-                    if (buf) chunks.push(buf);
-                    buf = part.trim();
-                }
-            }
-            if (buf) chunks.push(buf);
-        }
-    }
-    return chunks.length > 0 ? chunks : [text];
-}
-
 function stopTextToSpeech() {
-    if (typeof window !== "undefined" && "speechSynthesis" in window) {
-        window.speechSynthesis.cancel();
+    if (ttsHeartbeatInterval) {
+        clearInterval(ttsHeartbeatInterval);
+        ttsHeartbeatInterval = null;
     }
+    if (typeof window !== "undefined" && "speechSynthesis" in window) {
+        try {
+            window.speechSynthesis.cancel();
+        } catch (e) {}
+    }
+    window.__ttsUtterance = null;
+    isSpeakingResponse = false;
     if (activeTtsBtn) {
         activeTtsBtn.classList.remove("playing");
         const label = activeTtsBtn.querySelector(".tts-label");
@@ -291,51 +290,6 @@ function stopTextToSpeech() {
         activeTtsBtn.setAttribute("title", "Listen to response");
         activeTtsBtn = null;
     }
-    isSpeakingResponse = false;
-    activeUtteranceChunks = [];
-    activeChunkIndex = 0;
-}
-
-function speakNextChunk() {
-    if (!isSpeakingResponse || activeChunkIndex >= activeUtteranceChunks.length) {
-        stopTextToSpeech();
-        return;
-    }
-
-    const chunk = activeUtteranceChunks[activeChunkIndex];
-    const utterance = new SpeechSynthesisUtterance(chunk);
-    utterance.lang = "en-US";
-    utterance.rate = 1.0;
-    utterance.pitch = 1.0;
-
-    const voices = window.speechSynthesis.getVoices();
-    if (voices && voices.length > 0) {
-        const preferredVoice = voices.find(v => 
-            (v.name.includes("Google") || v.name.includes("Natural") || v.name.includes("Samantha") || v.name.includes("Daniel") || v.name.includes("Premium") || v.name.includes("Karen")) && v.lang.startsWith("en")
-        ) || voices.find(v => v.lang.startsWith("en"));
-        if (preferredVoice) {
-            utterance.voice = preferredVoice;
-        }
-    }
-
-    utterance.onend = () => {
-        if (!isSpeakingResponse) return;
-        activeChunkIndex++;
-        if (activeChunkIndex < activeUtteranceChunks.length) {
-            speakNextChunk();
-        } else {
-            stopTextToSpeech();
-        }
-    };
-
-    utterance.onerror = (e) => {
-        if (e.error !== "interrupted" && e.error !== "canceled") {
-            console.warn("Speech synthesis error:", e);
-        }
-        stopTextToSpeech();
-    };
-
-    window.speechSynthesis.speak(utterance);
 }
 
 function toggleTextToSpeech(rawText, btn) {
@@ -344,17 +298,21 @@ function toggleTextToSpeech(rawText, btn) {
         return;
     }
 
+    // If currently playing on THIS button, stop it
     if (isSpeakingResponse && activeTtsBtn === btn) {
         stopTextToSpeech();
         showToast("Audio playback stopped");
         return;
     }
 
-    stopTextToSpeech();
-
-    if (isRecognizingSpeech) {
+    // Stop any active speech recognition
+    if (isRecognizingSpeech || isFallbackRecording) {
         stopSpeechRecognition();
     }
+
+    // If already speaking another message, cancel it first
+    const wasSpeaking = isSpeakingResponse || window.speechSynthesis.speaking;
+    stopTextToSpeech();
 
     const cleanText = cleanMarkdownForSpeech(rawText);
     if (!cleanText) {
@@ -362,152 +320,358 @@ function toggleTextToSpeech(rawText, btn) {
         return;
     }
 
-    activeUtteranceChunks = splitTextIntoSentences(cleanText);
-    if (activeUtteranceChunks.length === 0) return;
-
-    activeChunkIndex = 0;
     isSpeakingResponse = true;
     activeTtsBtn = btn;
-
     btn.classList.add("playing");
     const label = btn.querySelector(".tts-label");
     if (label) label.textContent = "Stop";
     btn.setAttribute("aria-label", "Stop audio playback");
     btn.setAttribute("title", "Click to stop audio playback");
 
-    window.speechSynthesis.cancel();
-    speakNextChunk();
+    // Short 50ms pause if another audio was just cancelled, preventing Chromium cancellation race condition
+    const startDelay = wasSpeaking ? 60 : 0;
+
+    setTimeout(() => {
+        if (!isSpeakingResponse || activeTtsBtn !== btn) return;
+
+        // Wake up speech synthesis audio thread if paused
+        if (window.speechSynthesis.paused) {
+            window.speechSynthesis.resume();
+        }
+
+        const utterance = new SpeechSynthesisUtterance(cleanText);
+        utterance.lang = "en-US";
+        utterance.rate = 1.0;
+        utterance.pitch = 1.0;
+        utterance.volume = 1.0;
+
+        if (availableVoices.length === 0) {
+            loadVoices();
+        }
+        if (availableVoices.length > 0) {
+            const preferred = availableVoices.find(v => 
+                (v.name.includes("Google") || v.name.includes("Natural") || v.name.includes("Samantha") || v.name.includes("Daniel") || v.name.includes("Karen") || v.name.includes("Premium")) && v.lang.startsWith("en")
+            ) || availableVoices.find(v => v.lang.startsWith("en"));
+            if (preferred) {
+                utterance.voice = preferred;
+            }
+        }
+
+        utterance.onstart = () => {
+            // Heartbeat to prevent Chrome ~14s speech cutoff bug on long texts
+            if (ttsHeartbeatInterval) clearInterval(ttsHeartbeatInterval);
+            ttsHeartbeatInterval = setInterval(() => {
+                if (window.speechSynthesis && window.speechSynthesis.speaking) {
+                    window.speechSynthesis.pause();
+                    window.speechSynthesis.resume();
+                } else {
+                    clearInterval(ttsHeartbeatInterval);
+                }
+            }, 8000);
+        };
+
+        utterance.onend = () => {
+            stopTextToSpeech();
+        };
+
+        utterance.onerror = (e) => {
+            if (e.error !== "interrupted" && e.error !== "canceled") {
+                console.warn("Speech synthesis error:", e);
+                showToast("Could not play response audio on this device.", "danger");
+            }
+            stopTextToSpeech();
+        };
+
+        // Pin to window to prevent V8 / WebKit garbage collection mid-speech
+        window.__ttsUtterance = utterance;
+
+        window.speechSynthesis.speak(utterance);
+    }, startDelay);
 }
 
-if (typeof window !== "undefined" && "speechSynthesis" in window) {
-    window.speechSynthesis.onvoiceschanged = () => {
-        window.speechSynthesis.getVoices();
-    };
-}
+// ==================================================
+// 2. Speech-to-Text (STT) Engine
+// Primary: Native SpeechRecognition (Chrome, Edge, Safari)
+// Fallback: MediaRecorder + Backend Gemini Transcribe (Firefox & unsupported)
+// ==================================================
 
-// Speech-to-Text (STT) Engine
-const SpeechRecognitionClass = window.SpeechRecognition || window.webkitSpeechRecognition;
-let speechRecognizer = null;
+const SpeechRecognitionClass = window.SpeechRecognition || 
+                              window.webkitSpeechRecognition || 
+                              window.mozSpeechRecognition || 
+                              window.msSpeechRecognition;
+
+const isSafariBrowser = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+
+let activeRecognition = null;
 let isRecognizingSpeech = false;
 let speechBaseText = "";
+let speechRestartTimer = null;
 
-function stopSpeechRecognition() {
-    if (speechRecognizer) {
-        try {
-            speechRecognizer.stop();
-        } catch (e) {
-            // Ignored if already stopped
-        }
-    }
-    isRecognizingSpeech = false;
+// MediaRecorder Fallback state
+let mediaRecorderInstance = null;
+let recordedAudioChunks = [];
+let mediaStreamRef = null;
+let isFallbackRecording = false;
+
+function updateMicUiActive(active, bannerText = "Listening... Speak your chess question") {
     if (micBtn) {
-        micBtn.classList.remove("recording");
-        micBtn.setAttribute("aria-pressed", "false");
-        micBtn.setAttribute("title", "Turn on microphone to speak");
+        micBtn.classList.toggle("recording", active);
+        micBtn.setAttribute("aria-pressed", active ? "true" : "false");
+        micBtn.setAttribute("title", active ? "Click to stop listening" : "Turn on microphone to speak");
     }
     if (speechBanner) {
-        speechBanner.classList.remove("active");
+        speechBanner.classList.toggle("active", active);
+        const textEl = speechBanner.querySelector(".speech-banner-text");
+        if (textEl) textEl.textContent = bannerText;
     }
     if (questionInput) {
-        questionInput.placeholder = "Ask anything about chess, rules, or current position...";
+        questionInput.placeholder = active 
+            ? "🎙️ Listening... Speak your chess question now..." 
+            : "Ask anything about chess, rules, or current position...";
     }
 }
 
-function startSpeechRecognition() {
-    if (!SpeechRecognitionClass) {
-        showToast("Speech recognition is not supported in this browser. Please try Chrome, Edge, or Safari.", "danger");
+function stopSpeechRecognition() {
+    if (speechRestartTimer) {
+        clearTimeout(speechRestartTimer);
+        speechRestartTimer = null;
+    }
+
+    // Stop Native Speech Recognition if active
+    if (activeRecognition) {
+        try {
+            activeRecognition.abort();
+        } catch (e) {}
+        activeRecognition = null;
+    }
+    isRecognizingSpeech = false;
+
+    // Stop MediaRecorder fallback if active
+    if (mediaRecorderInstance && mediaRecorderInstance.state !== "inactive") {
+        try {
+            mediaRecorderInstance.stop();
+        } catch (e) {}
+    }
+    if (mediaStreamRef) {
+        try {
+            mediaStreamRef.getTracks().forEach(track => track.stop());
+        } catch (e) {}
+        mediaStreamRef = null;
+    }
+    isFallbackRecording = false;
+
+    updateMicUiActive(false);
+}
+
+function startNativeSpeechRecognition() {
+    try {
+        const recognition = new SpeechRecognitionClass();
+        activeRecognition = recognition;
+
+        // Safari does not support continuous mode; Chrome/Edge do
+        recognition.continuous = !isSafariBrowser;
+        recognition.interimResults = true;
+        recognition.lang = "en-US";
+
+        recognition.onstart = () => {
+            isRecognizingSpeech = true;
+            updateMicUiActive(true, "Listening... Speak your chess question");
+            showToast("Microphone is active. Speak your question...", "info");
+        };
+
+        recognition.onresult = (event) => {
+            let interimTranscript = "";
+            let finalTranscript = "";
+
+            for (let i = event.resultIndex; i < event.results.length; ++i) {
+                const part = event.results[i][0].transcript;
+                if (event.results[i].isFinal) {
+                    finalTranscript += part + " ";
+                } else {
+                    interimTranscript += part;
+                }
+            }
+
+            const spoken = (finalTranscript + interimTranscript).trim();
+            let combined = speechBaseText;
+            if (combined && !combined.endsWith(" ")) {
+                combined += " ";
+            }
+            combined += spoken;
+
+            questionInput.value = combined;
+            questionInput.style.height = "auto";
+            questionInput.style.height = Math.min(questionInput.scrollHeight, 140) + "px";
+        };
+
+        recognition.onerror = (event) => {
+            console.warn("Speech recognition error:", event.error);
+            if (event.error === "not-allowed" || event.error === "service-not-allowed") {
+                showToast("Microphone access was denied. Please allow microphone permissions in your browser.", "danger");
+                stopSpeechRecognition();
+            } else if (event.error === "audio-capture") {
+                showToast("No microphone was detected. Please check your audio input device.", "danger");
+                stopSpeechRecognition();
+            } else if (event.error === "network") {
+                console.log("Native speech network error; falling back to MediaRecorder...");
+                stopSpeechRecognition();
+                startMediaRecorderFallback();
+            } else if (event.error !== "no-speech" && event.error !== "aborted") {
+                stopSpeechRecognition();
+            }
+        };
+
+        recognition.onend = () => {
+            // If user did not manually stop (e.g. Safari single phrase ended), auto-restart smoothly
+            if (isRecognizingSpeech && activeRecognition === recognition) {
+                speechBaseText = questionInput.value.trim();
+                activeRecognition = null;
+                speechRestartTimer = setTimeout(() => {
+                    if (isRecognizingSpeech) {
+                        startNativeSpeechRecognition();
+                    }
+                }, 100);
+            } else {
+                activeRecognition = null;
+                isRecognizingSpeech = false;
+                updateMicUiActive(false);
+            }
+        };
+
+        recognition.start();
+
+    } catch (err) {
+        console.warn("Failed to start native speech recognition, falling back to MediaRecorder:", err);
+        startMediaRecorderFallback();
+    }
+}
+
+async function startMediaRecorderFallback() {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        showToast("Audio recording is not supported in this browser. Please use Chrome, Edge, or Safari.", "danger");
+        stopSpeechRecognition();
         return;
     }
 
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        mediaStreamRef = stream;
+        recordedAudioChunks = [];
+
+        let options = {};
+        if (typeof MediaRecorder.isTypeSupported === "function") {
+            if (MediaRecorder.isTypeSupported("audio/webm;codecs=opus")) {
+                options = { mimeType: "audio/webm;codecs=opus" };
+            } else if (MediaRecorder.isTypeSupported("audio/webm")) {
+                options = { mimeType: "audio/webm" };
+            } else if (MediaRecorder.isTypeSupported("audio/mp4")) {
+                options = { mimeType: "audio/mp4" };
+            }
+        }
+
+        const recorder = new MediaRecorder(stream, options);
+        mediaRecorderInstance = recorder;
+
+        recorder.ondataavailable = (e) => {
+            if (e.data && e.data.size > 0) {
+                recordedAudioChunks.push(e.data);
+            }
+        };
+
+        recorder.onstart = () => {
+            isFallbackRecording = true;
+            updateMicUiActive(true, "Recording voice... Click Stop when finished");
+            showToast("Recording voice... Click Stop when finished", "info");
+        };
+
+        recorder.onstop = async () => {
+            isFallbackRecording = false;
+            updateMicUiActive(false);
+
+            if (recordedAudioChunks.length === 0) return;
+
+            const mime = recorder.mimeType || "audio/webm";
+            const audioBlob = new Blob(recordedAudioChunks, { type: mime });
+            recordedAudioChunks = [];
+
+            // Transcribe using backend Gemini endpoint
+            showToast("Transcribing your audio with AI...", "info");
+
+            const reader = new FileReader();
+            reader.onloadend = async () => {
+                const base64Data = reader.result;
+                try {
+                    const response = await fetch(`${API_BASE}/api/transcribe`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            audio_base64: base64Data,
+                            mime_type: mime
+                        })
+                    });
+
+                    if (!response.ok) throw new Error("Transcription server error");
+
+                    const data = await response.json();
+                    if (data.text) {
+                        let combined = speechBaseText;
+                        if (combined && !combined.endsWith(" ")) combined += " ";
+                        combined += data.text;
+                        questionInput.value = combined;
+                        questionInput.style.height = "auto";
+                        questionInput.style.height = Math.min(questionInput.scrollHeight, 140) + "px";
+                        showToast("Voice transcribed successfully!");
+                        questionInput.focus();
+                    } else if (data.error) {
+                        console.error("Transcribe API error:", data.error);
+                        showToast("Could not transcribe voice. Try typing your question.", "danger");
+                    }
+                } catch (err) {
+                    console.error("Transcription failed:", err);
+                    showToast("Could not transcribe voice. Please try again or type.", "danger");
+                }
+            };
+            reader.readAsDataURL(audioBlob);
+        };
+
+        recorder.start();
+
+    } catch (err) {
+        console.error("getUserMedia error:", err);
+        showToast("Microphone access denied. Please allow microphone permissions in your browser.", "danger");
+        stopSpeechRecognition();
+    }
+}
+
+function toggleSpeechRecognition(e) {
+    if (e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+
+    if (isRecognizingSpeech || isFallbackRecording) {
+        stopSpeechRecognition();
+        showToast("Voice input stopped");
+        return;
+    }
+
+    // Stop TTS if speaking so mic doesn't record the response
     if (isSpeakingResponse) {
         stopTextToSpeech();
     }
 
-    try {
-        if (!speechRecognizer) {
-            speechRecognizer = new SpeechRecognitionClass();
-            speechRecognizer.continuous = true;
-            speechRecognizer.interimResults = true;
-            speechRecognizer.lang = "en-US";
+    speechBaseText = questionInput.value.trim();
 
-            speechRecognizer.onstart = () => {
-                isRecognizingSpeech = true;
-                if (micBtn) {
-                    micBtn.classList.add("recording");
-                    micBtn.setAttribute("aria-pressed", "true");
-                    micBtn.setAttribute("title", "Click to stop voice recording");
-                }
-                if (speechBanner) {
-                    speechBanner.classList.add("active");
-                }
-                if (questionInput) {
-                    questionInput.placeholder = "🎙️ Listening... Speak your query now...";
-                }
-                showToast("Microphone active. Speak your question...", "info");
-            };
-
-            speechRecognizer.onresult = (event) => {
-                let interimTranscript = "";
-                let finalTranscript = "";
-
-                for (let i = 0; i < event.results.length; ++i) {
-                    const transcriptPart = event.results[i][0].transcript;
-                    if (event.results[i].isFinal) {
-                        finalTranscript += transcriptPart + " ";
-                    } else {
-                        interimTranscript += transcriptPart;
-                    }
-                }
-
-                const fullSpoken = (finalTranscript + interimTranscript).trim();
-                let combinedText = speechBaseText;
-                if (combinedText && !combinedText.endsWith(" ")) {
-                    combinedText += " ";
-                }
-                combinedText += fullSpoken;
-
-                questionInput.value = combinedText;
-                questionInput.style.height = "auto";
-                questionInput.style.height = Math.min(questionInput.scrollHeight, 140) + "px";
-            };
-
-            speechRecognizer.onerror = (event) => {
-                console.warn("Speech recognition error:", event.error);
-                if (event.error === "not-allowed" || event.error === "service-not-allowed") {
-                    showToast("Microphone permission denied. Please allow microphone access in your browser.", "danger");
-                } else if (event.error === "audio-capture") {
-                    showToast("No microphone was detected. Please check your audio input settings.", "danger");
-                } else if (event.error === "network") {
-                    showToast("Network error occurred during speech recognition.", "danger");
-                }
-                stopSpeechRecognition();
-            };
-
-            speechRecognizer.onend = () => {
-                stopSpeechRecognition();
-            };
-        }
-
-        speechBaseText = questionInput.value.trim();
-        speechRecognizer.start();
-
-    } catch (err) {
-        console.error("Failed to start speech recognition:", err);
-        stopSpeechRecognition();
-    }
-}
-
-function toggleSpeechRecognition() {
-    if (isRecognizingSpeech) {
-        stopSpeechRecognition();
-        showToast("Voice input stopped");
+    if (SpeechRecognitionClass) {
+        startNativeSpeechRecognition();
     } else {
-        startSpeechRecognition();
+        startMediaRecorderFallback();
     }
 }
 
 micBtn?.addEventListener("click", toggleSpeechRecognition);
-stopSpeechBannerBtn?.addEventListener("click", () => {
+stopSpeechBannerBtn?.addEventListener("click", (e) => {
+    if (e) e.preventDefault();
     stopSpeechRecognition();
     showToast("Voice input stopped");
 });
