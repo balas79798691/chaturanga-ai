@@ -213,30 +213,14 @@ async function loadSessionsList() {
 
 // ==================================================
 // 1. Text-to-Speech (TTS) Engine
-// Primary: High-fidelity Server MP3 (/api/speak via gTTS)
-// Fallback: Browser Web SpeechSynthesis
+// High-fidelity Universal Server MP3 (/api/speak via Google TTS)
 // ==================================================
 
 let currentTtsAudio = null;
+let currentTtsAbortController = null;
+let currentTtsBlobUrl = null;
 let activeTtsBtn = null;
 let isSpeakingResponse = false;
-let ttsHeartbeatInterval = null;
-let availableVoices = [];
-
-function loadVoices() {
-    if (typeof window !== "undefined" && "speechSynthesis" in window) {
-        try {
-            availableVoices = window.speechSynthesis.getVoices() || [];
-        } catch (e) {
-            availableVoices = [];
-        }
-    }
-}
-
-loadVoices();
-if (typeof window !== "undefined" && "speechSynthesis" in window) {
-    window.speechSynthesis.onvoiceschanged = loadVoices;
-}
 
 function cleanMarkdownForSpeech(markdown) {
     if (!markdown) return "";
@@ -272,121 +256,80 @@ function cleanMarkdownForSpeech(markdown) {
 }
 
 function stopTextToSpeech() {
+    // 1. Mark state inactive immediately
+    isSpeakingResponse = false;
+
+    // 2. Abort in-flight network request if still downloading audio
+    if (currentTtsAbortController) {
+        try {
+            currentTtsAbortController.abort();
+        } catch (e) {}
+        currentTtsAbortController = null;
+    }
+
+    // 3. Halt and unload HTML5 audio player
     if (currentTtsAudio) {
         try {
+            // Detach listeners first so pause/unload doesn't fire synthetic error or end handlers
+            currentTtsAudio.onplay = null;
+            currentTtsAudio.onended = null;
+            currentTtsAudio.onerror = null;
+            currentTtsAudio.onpause = null;
+
             currentTtsAudio.pause();
             currentTtsAudio.currentTime = 0;
-            currentTtsAudio.src = "";
+            currentTtsAudio.removeAttribute("src");
+            currentTtsAudio.load();
         } catch (e) {}
         currentTtsAudio = null;
     }
 
-    if (ttsHeartbeatInterval) {
-        clearInterval(ttsHeartbeatInterval);
-        ttsHeartbeatInterval = null;
+    // 4. Revoke blob URL from browser memory
+    if (currentTtsBlobUrl) {
+        try {
+            URL.revokeObjectURL(currentTtsBlobUrl);
+        } catch (e) {}
+        currentTtsBlobUrl = null;
     }
 
+    // 5. Force cancel any legacy browser speech synthesis queue
     if (typeof window !== "undefined" && "speechSynthesis" in window) {
         try {
+            window.speechSynthesis.pause();
+            window.speechSynthesis.cancel();
+            if (window.speechSynthesis.paused) {
+                window.speechSynthesis.resume();
+            }
             window.speechSynthesis.cancel();
         } catch (e) {}
     }
-    window.__ttsUtterance = null;
-    isSpeakingResponse = false;
 
-    if (activeTtsBtn) {
-        activeTtsBtn.classList.remove("playing", "loading");
-        const label = activeTtsBtn.querySelector(".tts-label");
-        if (label) label.textContent = "Listen";
-        activeTtsBtn.setAttribute("aria-label", "Listen to response");
-        activeTtsBtn.setAttribute("title", "Listen to response");
-        activeTtsBtn = null;
-    }
-}
-
-function fallbackSpeechSynthesis(cleanText, btn) {
-    if (!("speechSynthesis" in window) || typeof SpeechSynthesisUtterance === "undefined") {
-        stopTextToSpeech();
-        showToast("Text-to-speech audio could not be played on this device.", "danger");
-        return;
-    }
-
-    try {
-        window.speechSynthesis.cancel();
-        if (window.speechSynthesis.paused) {
-            window.speechSynthesis.resume();
-        }
-
-        const utterance = new SpeechSynthesisUtterance(cleanText);
-        utterance.lang = "en-US";
-        utterance.rate = 1.0;
-        utterance.pitch = 1.0;
-        utterance.volume = 1.0;
-
-        if (availableVoices.length === 0) {
-            loadVoices();
-        }
-        if (availableVoices.length > 0) {
-            const preferred = availableVoices.find(v => 
-                (v.name.includes("Google") || v.name.includes("Natural") || v.name.includes("Samantha") || v.name.includes("Daniel") || v.name.includes("Karen") || v.name.includes("Premium")) && v.lang.startsWith("en")
-            ) || availableVoices.find(v => v.lang.startsWith("en"));
-            if (preferred) {
-                utterance.voice = preferred;
-            }
-        }
-
-        btn.classList.remove("loading");
-        btn.classList.add("playing");
+    // 6. Reset all TTS buttons across the UI
+    document.querySelectorAll(".message-action-btn.tts-btn").forEach((btn) => {
+        btn.classList.remove("playing", "loading");
         const label = btn.querySelector(".tts-label");
-        if (label) label.textContent = "Stop";
+        if (label) label.textContent = "Listen";
+        btn.setAttribute("aria-label", "Listen to response");
+        btn.setAttribute("title", "Listen to response");
+    });
 
-        utterance.onstart = () => {
-            if (ttsHeartbeatInterval) clearInterval(ttsHeartbeatInterval);
-            ttsHeartbeatInterval = setInterval(() => {
-                if (window.speechSynthesis && window.speechSynthesis.speaking) {
-                    window.speechSynthesis.pause();
-                    window.speechSynthesis.resume();
-                } else {
-                    clearInterval(ttsHeartbeatInterval);
-                }
-            }, 8000);
-        };
-
-        utterance.onend = () => {
-            stopTextToSpeech();
-        };
-
-        utterance.onerror = (e) => {
-            if (e.error !== "interrupted" && e.error !== "canceled") {
-                console.warn("Speech synthesis error:", e);
-                showToast("Could not play response audio on this device.", "danger");
-            }
-            stopTextToSpeech();
-        };
-
-        window.__ttsUtterance = utterance;
-        window.speechSynthesis.speak(utterance);
-    } catch (err) {
-        console.error("Speech synthesis fallback failed:", err);
-        stopTextToSpeech();
-        showToast("Could not play response audio on this device.", "danger");
-    }
+    activeTtsBtn = null;
 }
 
 async function toggleTextToSpeech(rawText, btn) {
-    // If currently playing on THIS button, stop it
-    if (isSpeakingResponse && activeTtsBtn === btn) {
+    // If THIS button (or any button) is currently playing or loading, clicking it stops audio immediately
+    if (isSpeakingResponse || btn.classList.contains("playing") || btn.classList.contains("loading")) {
         stopTextToSpeech();
         showToast("Audio playback stopped");
         return;
     }
 
-    // Stop any active speech recognition
+    // Stop any active microphone input
     if (isRecognizingSpeech || isFallbackRecording) {
         stopSpeechRecognition();
     }
 
-    // Stop any previous speech
+    // Stop any previously playing speech cleanly
     stopTextToSpeech();
 
     const cleanText = cleanMarkdownForSpeech(rawText);
@@ -402,12 +345,15 @@ async function toggleTextToSpeech(rawText, btn) {
     if (label) label.textContent = "Loading...";
     btn.setAttribute("aria-label", "Loading audio...");
 
-    // Primary: Try high-quality universal MP3 via /api/speak
+    const abortController = new AbortController();
+    currentTtsAbortController = abortController;
+
     try {
         const response = await fetch(`${API_BASE}/api/speak`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ text: cleanText })
+            body: JSON.stringify({ text: cleanText }),
+            signal: abortController.signal
         });
 
         if (!response.ok) {
@@ -415,16 +361,23 @@ async function toggleTextToSpeech(rawText, btn) {
         }
 
         const blob = await response.blob();
-        if (!isSpeakingResponse || activeTtsBtn !== btn) {
-            return; // User clicked stop while loading
+
+        // Check if user clicked Stop while downloading audio
+        if (!isSpeakingResponse || activeTtsBtn !== btn || abortController.signal.aborted) {
+            return;
         }
 
         const audioUrl = URL.createObjectURL(blob);
-        const audio = new Audio(audioUrl);
+        currentTtsBlobUrl = audioUrl;
+
+        const audio = new Audio();
         currentTtsAudio = audio;
 
         audio.onplay = () => {
-            if (!isSpeakingResponse || activeTtsBtn !== btn) return;
+            if (!isSpeakingResponse || activeTtsBtn !== btn) {
+                stopTextToSpeech();
+                return;
+            }
             btn.classList.remove("loading");
             btn.classList.add("playing");
             if (label) label.textContent = "Stop";
@@ -433,22 +386,36 @@ async function toggleTextToSpeech(rawText, btn) {
         };
 
         audio.onended = () => {
-            URL.revokeObjectURL(audioUrl);
             stopTextToSpeech();
         };
 
         audio.onerror = (err) => {
-            console.warn("Audio element error, falling back to speech synthesis:", err);
-            URL.revokeObjectURL(audioUrl);
-            fallbackSpeechSynthesis(cleanText, btn);
+            if (!isSpeakingResponse || activeTtsBtn !== btn) return;
+            console.warn("Audio playback error:", err);
+            stopTextToSpeech();
+            showToast("Could not play response audio on this device.", "danger");
         };
 
-        await audio.play();
-    } catch (err) {
-        console.warn("Server TTS failed, falling back to client speech synthesis:", err);
-        if (isSpeakingResponse && activeTtsBtn === btn) {
-            fallbackSpeechSynthesis(cleanText, btn);
+        audio.src = audioUrl;
+        const playPromise = audio.play();
+        if (playPromise !== undefined) {
+            playPromise.catch((err) => {
+                // If user stopped playback or paused, AbortError is normal
+                if (err.name === "AbortError" || !isSpeakingResponse || activeTtsBtn !== btn) {
+                    return;
+                }
+                console.warn("Audio play() interrupted:", err);
+                stopTextToSpeech();
+            });
         }
+    } catch (err) {
+        // If intentionally aborted by user clicking Stop, ignore quietly
+        if (err.name === "AbortError" || !isSpeakingResponse || activeTtsBtn !== btn) {
+            return;
+        }
+        console.error("Server TTS fetch error:", err);
+        stopTextToSpeech();
+        showToast("Audio playback service is temporarily unavailable.", "danger");
     }
 }
 
