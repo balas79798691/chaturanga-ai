@@ -1025,6 +1025,13 @@ button {
     filter: brightness(1.08);
 }
 
+.message-action-btn.tts-btn.loading {
+    opacity: 0.85;
+    border-color: var(--gold);
+    color: var(--gold);
+    cursor: wait;
+}
+
 .message-action-btn.tts-btn .tts-icon-stop {
     display: none;
 }

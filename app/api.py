@@ -1,11 +1,16 @@
 
 import base64
+import functools
+import io
+import re
 import sqlite3
 from pathlib import Path
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import Response
 from google import genai
+from gtts import gTTS
 from pydantic import BaseModel
 
 from app.rag import ask_question, get_gemini_client
@@ -19,18 +24,21 @@ DB_PATH = BASE_DIR / "conversations.db"
 
 app = FastAPI()
 
+# Cache-control middleware to prevent browser and CDN caching of frontend files
+@app.middleware("http")
+async def add_no_cache_headers(request: Request, call_next):
+    response = await call_next(request)
+    path = request.url.path
+    if path.endswith((".html", ".css", ".js")) or path == "/":
+        response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+        response.headers["Pragma"] = "no-cache"
+        response.headers["Expires"] = "0"
+    return response
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://127.0.0.1:5500",
-        "http://localhost:5500",
-        "http://127.0.0.1:8080",
-        "http://localhost:8080",
-        "http://127.0.0.1:3000",
-        "http://localhost:3000",
-    ],
-    allow_origin_regex=r"^https?://(localhost|127\.0\.0\.1)(:\d+)?$",
-    allow_credentials=True,
+    allow_origins=["*"],
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -78,6 +86,36 @@ class TranscribeRequest(BaseModel):
     audio_base64: str
     mime_type: str = "audio/webm"
 
+
+class SpeakRequest(BaseModel):
+    text: str
+
+
+def clean_text_for_speech(text: str) -> str:
+    if not text:
+        return ""
+    # Strip markdown code blocks
+    text = re.sub(r"```[\s\S]*?```", " ", text)
+    # Strip inline code
+    text = re.sub(r"`[^`]+`", " ", text)
+    # Strip links, retain anchor text
+    text = re.sub(r"\[(.*?)\]\(.*?\)", r"\1", text)
+    # Strip markdown headings
+    text = re.sub(r"^#{1,6}\s+", "", text, flags=re.MULTILINE)
+    # Strip bold/italics
+    text = re.sub(r"[*_]{1,3}([^*_]+)[*_]{1,3}", r"\1", text)
+    # Clean move numbers so it reads like commentary: e.g. 1. e4 e5 -> e4 e5
+    text = re.sub(r"\b\d+\.\s*", "", text)
+    # Strip list bullets
+    text = re.sub(r"^\s*[-*+]\s+", "", text, flags=re.MULTILINE)
+    # Strip chess pieces
+    text = re.sub(r"[♟♞♝♜♛♚♙♘♗♖♕♔]", "", text)
+    # Collapse periods and spacing
+    text = re.sub(r"\n+", ". ", text)
+    text = re.sub(r"\s+", " ", text)
+    text = re.sub(r"(\.\s*)+", ". ", text)
+    return text.strip()
+
 # --------------------------------------------------
 # 4. Routes
 # --------------------------------------------------
@@ -85,6 +123,68 @@ class TranscribeRequest(BaseModel):
 @app.get("/api/health")
 def health():
     return {"status": "ok", "message": "Chess RAG Chatbot API is running!"}
+
+
+@functools.lru_cache(maxsize=128)
+def get_tts_audio_data(clean_text: str) -> bytes:
+    """Generate and cache MP3 audio bytes using gTTS."""
+    buf = io.BytesIO()
+    tts = gTTS(text=clean_text, lang="en")
+    tts.write_to_fp(buf)
+    return buf.getvalue()
+
+
+@app.post("/api/speak")
+def speak(request: SpeakRequest):
+    """Generate high-quality MP3 speech audio via Google TTS for reliable universal playback on any device."""
+    try:
+        clean_text = clean_text_for_speech(request.text)
+        if not clean_text:
+            return Response(content=b"", media_type="audio/mpeg", status_code=400)
+
+        # Cap length to prevent unbounded generation
+        if len(clean_text) > 1500:
+            clean_text = clean_text[:1500].rsplit(".", 1)[0] + "."
+
+        audio_data = get_tts_audio_data(clean_text)
+
+        return Response(
+            content=audio_data,
+            media_type="audio/mpeg",
+            headers={
+                "Cache-Control": "public, max-age=86400",
+                "Accept-Ranges": "bytes",
+            },
+        )
+    except Exception as e:
+        print(f"TTS generation error: {e}")
+        return Response(content=str(e).encode(), media_type="text/plain", status_code=500)
+
+
+@app.get("/api/speak")
+def speak_get(text: str = ""):
+    """GET variant of /api/speak for direct audio streaming src playback."""
+    try:
+        clean_text = clean_text_for_speech(text)
+        if not clean_text:
+            return Response(content=b"", media_type="audio/mpeg", status_code=400)
+
+        if len(clean_text) > 1500:
+            clean_text = clean_text[:1500].rsplit(".", 1)[0] + "."
+
+        audio_data = get_tts_audio_data(clean_text)
+
+        return Response(
+            content=audio_data,
+            media_type="audio/mpeg",
+            headers={
+                "Cache-Control": "public, max-age=86400",
+                "Accept-Ranges": "bytes",
+            },
+        )
+    except Exception as e:
+        print(f"TTS generation error: {e}")
+        return Response(content=str(e).encode(), media_type="text/plain", status_code=500)
 
 
 @app.post("/api/transcribe")
@@ -102,15 +202,34 @@ def transcribe(request: TranscribeRequest):
         client = get_gemini_client()
         mime = request.mime_type.split(";")[0].strip() or "audio/webm"
 
-        response = client.models.generate_content(
-            model="gemini-2.5-flash",
-            contents=[
-                genai.types.Part.from_bytes(data=audio_bytes, mime_type=mime),
-                "Transcribe this spoken chess question or query into text accurately. Output only the plain transcription text, nothing else. If there is no speech, output nothing."
-            ],
-        )
+        # Try active models with fallback
+        response = None
+        for model_name in ["gemini-3.5-flash-lite", "gemini-3.8-flash"]:
+            try:
+                response = client.models.generate_content(
+                    model=model_name,
+                    contents=[
+                        genai.types.Part.from_bytes(data=audio_bytes, mime_type=mime),
+                        "Transcribe this spoken chess question or query into text accurately. Output only the plain transcription text, nothing else. If there is no speech, output nothing."
+                    ],
+                )
+                if response:
+                    break
+            except Exception as model_err:
+                print(f"Transcription model {model_name} error: {model_err}")
+                continue
 
-        transcript = (response.text or "").strip()
+        if not response:
+            return {"text": "", "error": "Transcription models unavailable."}
+
+        # Safely extract text parts without triggering thought_signature warnings
+        text_parts = []
+        if response.candidates and response.candidates[0].content and response.candidates[0].content.parts:
+            for part in response.candidates[0].content.parts:
+                if hasattr(part, "text") and part.text:
+                    text_parts.append(part.text)
+
+        transcript = "".join(text_parts).strip() or (response.text or "").strip()
         return {"text": transcript}
 
     except Exception as e:

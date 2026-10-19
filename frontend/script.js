@@ -213,8 +213,11 @@ async function loadSessionsList() {
 
 // ==================================================
 // 1. Text-to-Speech (TTS) Engine
+// Primary: High-fidelity Server MP3 (/api/speak via gTTS)
+// Fallback: Browser Web SpeechSynthesis
 // ==================================================
 
+let currentTtsAudio = null;
 let activeTtsBtn = null;
 let isSpeakingResponse = false;
 let ttsHeartbeatInterval = null;
@@ -255,9 +258,7 @@ function cleanMarkdownForSpeech(markdown) {
     text = text.replace(/[*_]{1,3}([^*_]+)[*_]{1,3}/g, "$1");
     // Remove strikethrough
     text = text.replace(/~~(.*?)~~/g, "$1");
-    // Clean chess move notation: e.g. "1. e4 e5 2. Nf3" -> "e4 e5, Nf3" so it doesn't pause on "1."
-    text = text.replace(/\b\d+\.\s+/g, "");
-    // Clean list markers
+    // Remove list markers
     text = text.replace(/^\s*[-*+]\s+/gm, "");
     // Remove horizontal rules
     text = text.replace(/^(?:[-*_]\s*){3,}$/gm, "");
@@ -271,10 +272,20 @@ function cleanMarkdownForSpeech(markdown) {
 }
 
 function stopTextToSpeech() {
+    if (currentTtsAudio) {
+        try {
+            currentTtsAudio.pause();
+            currentTtsAudio.currentTime = 0;
+            currentTtsAudio.src = "";
+        } catch (e) {}
+        currentTtsAudio = null;
+    }
+
     if (ttsHeartbeatInterval) {
         clearInterval(ttsHeartbeatInterval);
         ttsHeartbeatInterval = null;
     }
+
     if (typeof window !== "undefined" && "speechSynthesis" in window) {
         try {
             window.speechSynthesis.cancel();
@@ -282,8 +293,9 @@ function stopTextToSpeech() {
     }
     window.__ttsUtterance = null;
     isSpeakingResponse = false;
+
     if (activeTtsBtn) {
-        activeTtsBtn.classList.remove("playing");
+        activeTtsBtn.classList.remove("playing", "loading");
         const label = activeTtsBtn.querySelector(".tts-label");
         if (label) label.textContent = "Listen";
         activeTtsBtn.setAttribute("aria-label", "Listen to response");
@@ -292,49 +304,15 @@ function stopTextToSpeech() {
     }
 }
 
-function toggleTextToSpeech(rawText, btn) {
+function fallbackSpeechSynthesis(cleanText, btn) {
     if (!("speechSynthesis" in window) || typeof SpeechSynthesisUtterance === "undefined") {
-        showToast("Text-to-speech audio is not supported in this browser.", "danger");
-        return;
-    }
-
-    // If currently playing on THIS button, stop it
-    if (isSpeakingResponse && activeTtsBtn === btn) {
         stopTextToSpeech();
-        showToast("Audio playback stopped");
+        showToast("Text-to-speech audio could not be played on this device.", "danger");
         return;
     }
 
-    // Stop any active speech recognition
-    if (isRecognizingSpeech || isFallbackRecording) {
-        stopSpeechRecognition();
-    }
-
-    // If already speaking another message, cancel it first
-    const wasSpeaking = isSpeakingResponse || window.speechSynthesis.speaking;
-    stopTextToSpeech();
-
-    const cleanText = cleanMarkdownForSpeech(rawText);
-    if (!cleanText) {
-        showToast("No readable text found for audio playback.", "info");
-        return;
-    }
-
-    isSpeakingResponse = true;
-    activeTtsBtn = btn;
-    btn.classList.add("playing");
-    const label = btn.querySelector(".tts-label");
-    if (label) label.textContent = "Stop";
-    btn.setAttribute("aria-label", "Stop audio playback");
-    btn.setAttribute("title", "Click to stop audio playback");
-
-    // Short 50ms pause if another audio was just cancelled, preventing Chromium cancellation race condition
-    const startDelay = wasSpeaking ? 60 : 0;
-
-    setTimeout(() => {
-        if (!isSpeakingResponse || activeTtsBtn !== btn) return;
-
-        // Wake up speech synthesis audio thread if paused
+    try {
+        window.speechSynthesis.cancel();
         if (window.speechSynthesis.paused) {
             window.speechSynthesis.resume();
         }
@@ -357,8 +335,12 @@ function toggleTextToSpeech(rawText, btn) {
             }
         }
 
+        btn.classList.remove("loading");
+        btn.classList.add("playing");
+        const label = btn.querySelector(".tts-label");
+        if (label) label.textContent = "Stop";
+
         utterance.onstart = () => {
-            // Heartbeat to prevent Chrome ~14s speech cutoff bug on long texts
             if (ttsHeartbeatInterval) clearInterval(ttsHeartbeatInterval);
             ttsHeartbeatInterval = setInterval(() => {
                 if (window.speechSynthesis && window.speechSynthesis.speaking) {
@@ -382,17 +364,98 @@ function toggleTextToSpeech(rawText, btn) {
             stopTextToSpeech();
         };
 
-        // Pin to window to prevent V8 / WebKit garbage collection mid-speech
         window.__ttsUtterance = utterance;
-
         window.speechSynthesis.speak(utterance);
-    }, startDelay);
+    } catch (err) {
+        console.error("Speech synthesis fallback failed:", err);
+        stopTextToSpeech();
+        showToast("Could not play response audio on this device.", "danger");
+    }
+}
+
+async function toggleTextToSpeech(rawText, btn) {
+    // If currently playing on THIS button, stop it
+    if (isSpeakingResponse && activeTtsBtn === btn) {
+        stopTextToSpeech();
+        showToast("Audio playback stopped");
+        return;
+    }
+
+    // Stop any active speech recognition
+    if (isRecognizingSpeech || isFallbackRecording) {
+        stopSpeechRecognition();
+    }
+
+    // Stop any previous speech
+    stopTextToSpeech();
+
+    const cleanText = cleanMarkdownForSpeech(rawText);
+    if (!cleanText) {
+        showToast("No readable text found for audio playback.", "info");
+        return;
+    }
+
+    isSpeakingResponse = true;
+    activeTtsBtn = btn;
+    btn.classList.add("loading");
+    const label = btn.querySelector(".tts-label");
+    if (label) label.textContent = "Loading...";
+    btn.setAttribute("aria-label", "Loading audio...");
+
+    // Primary: Try high-quality universal MP3 via /api/speak
+    try {
+        const response = await fetch(`${API_BASE}/api/speak`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ text: cleanText })
+        });
+
+        if (!response.ok) {
+            throw new Error(`TTS server HTTP ${response.status}`);
+        }
+
+        const blob = await response.blob();
+        if (!isSpeakingResponse || activeTtsBtn !== btn) {
+            return; // User clicked stop while loading
+        }
+
+        const audioUrl = URL.createObjectURL(blob);
+        const audio = new Audio(audioUrl);
+        currentTtsAudio = audio;
+
+        audio.onplay = () => {
+            if (!isSpeakingResponse || activeTtsBtn !== btn) return;
+            btn.classList.remove("loading");
+            btn.classList.add("playing");
+            if (label) label.textContent = "Stop";
+            btn.setAttribute("aria-label", "Stop audio playback");
+            btn.setAttribute("title", "Click to stop audio playback");
+        };
+
+        audio.onended = () => {
+            URL.revokeObjectURL(audioUrl);
+            stopTextToSpeech();
+        };
+
+        audio.onerror = (err) => {
+            console.warn("Audio element error, falling back to speech synthesis:", err);
+            URL.revokeObjectURL(audioUrl);
+            fallbackSpeechSynthesis(cleanText, btn);
+        };
+
+        await audio.play();
+    } catch (err) {
+        console.warn("Server TTS failed, falling back to client speech synthesis:", err);
+        if (isSpeakingResponse && activeTtsBtn === btn) {
+            fallbackSpeechSynthesis(cleanText, btn);
+        }
+    }
 }
 
 // ==================================================
 // 2. Speech-to-Text (STT) Engine
 // Primary: Native SpeechRecognition (Chrome, Edge, Safari)
-// Fallback: MediaRecorder + Backend Gemini Transcribe (Firefox & unsupported)
+// Fallback: MediaRecorder + Backend Gemini Transcribe
 // ==================================================
 
 const SpeechRecognitionClass = window.SpeechRecognition || 
@@ -421,6 +484,7 @@ function updateMicUiActive(active, bannerText = "Listening... Speak your chess q
     }
     if (speechBanner) {
         speechBanner.classList.toggle("active", active);
+        speechBanner.style.display = active ? "flex" : "none";
         const textEl = speechBanner.querySelector(".speech-banner-text");
         if (textEl) textEl.textContent = bannerText;
     }
@@ -451,8 +515,7 @@ function stopSpeechRecognition() {
         try {
             mediaRecorderInstance.stop();
         } catch (e) {}
-    }
-    if (mediaStreamRef) {
+    } else if (mediaStreamRef) {
         try {
             mediaStreamRef.getTracks().forEach(track => track.stop());
         } catch (e) {}
@@ -506,14 +569,14 @@ function startNativeSpeechRecognition() {
 
         recognition.onerror = (event) => {
             console.warn("Speech recognition error:", event.error);
-            if (event.error === "not-allowed" || event.error === "service-not-allowed") {
+            if (event.error === "not-allowed") {
                 showToast("Microphone access was denied. Please allow microphone permissions in your browser.", "danger");
                 stopSpeechRecognition();
             } else if (event.error === "audio-capture") {
                 showToast("No microphone was detected. Please check your audio input device.", "danger");
                 stopSpeechRecognition();
-            } else if (event.error === "network") {
-                console.log("Native speech network error; falling back to MediaRecorder...");
+            } else if (event.error === "network" || event.error === "service-not-allowed") {
+                console.log("Native speech network or service restriction; falling back to MediaRecorder + Gemini...");
                 stopSpeechRecognition();
                 startMediaRecorderFallback();
             } else if (event.error !== "no-speech" && event.error !== "aborted") {
@@ -522,7 +585,6 @@ function startNativeSpeechRecognition() {
         };
 
         recognition.onend = () => {
-            // If user did not manually stop (e.g. Safari single phrase ended), auto-restart smoothly
             if (isRecognizingSpeech && activeRecognition === recognition) {
                 speechBaseText = questionInput.value.trim();
                 activeRecognition = null;
@@ -566,6 +628,8 @@ async function startMediaRecorderFallback() {
                 options = { mimeType: "audio/webm" };
             } else if (MediaRecorder.isTypeSupported("audio/mp4")) {
                 options = { mimeType: "audio/mp4" };
+            } else if (MediaRecorder.isTypeSupported("audio/ogg;codecs=opus")) {
+                options = { mimeType: "audio/ogg;codecs=opus" };
             }
         }
 
@@ -580,19 +644,32 @@ async function startMediaRecorderFallback() {
 
         recorder.onstart = () => {
             isFallbackRecording = true;
-            updateMicUiActive(true, "Recording voice... Click Stop when finished");
-            showToast("Recording voice... Click Stop when finished", "info");
+            updateMicUiActive(true, "Recording voice... Click Stop or Mic when finished");
+            showToast("Recording voice... Speak your chess question", "info");
         };
 
         recorder.onstop = async () => {
             isFallbackRecording = false;
             updateMicUiActive(false);
 
+            // Clean up microphone stream immediately
+            if (mediaStreamRef) {
+                try {
+                    mediaStreamRef.getTracks().forEach(track => track.stop());
+                } catch (e) {}
+                mediaStreamRef = null;
+            }
+
             if (recordedAudioChunks.length === 0) return;
 
             const mime = recorder.mimeType || "audio/webm";
             const audioBlob = new Blob(recordedAudioChunks, { type: mime });
             recordedAudioChunks = [];
+
+            // Ignore tiny recordings (< 1000 bytes)
+            if (audioBlob.size < 1000) {
+                return;
+            }
 
             // Transcribe using backend Gemini endpoint
             showToast("Transcribing your audio with AI...", "info");
@@ -610,7 +687,7 @@ async function startMediaRecorderFallback() {
                         })
                     });
 
-                    if (!response.ok) throw new Error("Transcription server error");
+                    if (!response.ok) throw new Error(`Transcription server error HTTP ${response.status}`);
 
                     const data = await response.json();
                     if (data.text) {
@@ -634,7 +711,7 @@ async function startMediaRecorderFallback() {
             reader.readAsDataURL(audioBlob);
         };
 
-        recorder.start();
+        recorder.start(250);
 
     } catch (err) {
         console.error("getUserMedia error:", err);
